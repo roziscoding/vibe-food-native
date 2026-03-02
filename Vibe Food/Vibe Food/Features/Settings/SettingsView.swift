@@ -169,7 +169,7 @@ private struct SettingsFormView: View {
                 }
                 Button("Cancel", role: .cancel) { }
             } message: {
-                Text("This will delete meals, ingredients, and settings on this device.")
+                Text("This will delete meals, ingredients, insights, and settings on this device.")
             }
             .alert("Confirm Reset", isPresented: $store.showResetFinal) {
                 Button("Reset", role: .destructive) {

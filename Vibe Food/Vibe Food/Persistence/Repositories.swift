@@ -29,6 +29,7 @@ protocol AIIntegrationRepository {
 
 protocol InsightRepository {
     func fetchInsight(targetLocalDayKey: String) throws -> InsightRecord?
+    func hasAnyInsights() throws -> Bool
     func insert(_ insight: InsightRecord) throws
     func save() throws
 }
@@ -166,6 +167,13 @@ final class SwiftDataInsightRepository: InsightRepository {
             predicate: #Predicate { $0.targetLocalDayKey == targetLocalDayKey && $0.deletedAt == nil }
         )
         return try context.fetch(descriptor).first
+    }
+
+    func hasAnyInsights() throws -> Bool {
+        let descriptor = FetchDescriptor<InsightRecord>(
+            predicate: #Predicate { $0.deletedAt == nil }
+        )
+        return try !context.fetch(descriptor).isEmpty
     }
 
     func insert(_ insight: InsightRecord) throws {

@@ -19,6 +19,7 @@ final class InsightsStore {
     var sourceDayKey: String?
     var isLoading: Bool = false
     var isRefreshing: Bool = false
+    var showsOnboarding: Bool = false
     var errorMessage: String?
     private var loadTask: Task<Void, Never>?
 
@@ -37,6 +38,8 @@ final class InsightsStore {
     }
 
     func showCachedInsightIfAvailable(for targetDayKey: String) {
+        guard !showsOnboarding else { return }
+
         if let cached = cachedInsightsByDayKey[targetDayKey] {
             apply(cached)
             errorMessage = nil
@@ -55,17 +58,48 @@ final class InsightsStore {
         }
     }
 
-    func loadOrGenerate(for targetDate: Date, targetDayKey: String, forceRefresh: Bool = false) async {
+    func loadOrGenerate(
+        for targetDate: Date,
+        targetDayKey: String,
+        forceRefresh: Bool = false,
+        allowInitialGeneration: Bool = false
+    ) async {
         loadTask?.cancel()
         let task = Task { @MainActor [weak self] in
             guard let self else { return }
-            await performLoadOrGenerate(for: targetDate, targetDayKey: targetDayKey, forceRefresh: forceRefresh)
+            await performLoadOrGenerate(
+                for: targetDate,
+                targetDayKey: targetDayKey,
+                forceRefresh: forceRefresh,
+                allowInitialGeneration: allowInitialGeneration
+            )
         }
         loadTask = task
         await task.value
     }
 
-    private func performLoadOrGenerate(for targetDate: Date, targetDayKey: String, forceRefresh: Bool) async {
+    private func performLoadOrGenerate(
+        for targetDate: Date,
+        targetDayKey: String,
+        forceRefresh: Bool,
+        allowInitialGeneration: Bool
+    ) async {
+        do {
+            let hasAnyInsights = try insightRepository.hasAnyInsights()
+            if !hasAnyInsights && !allowInitialGeneration {
+                resetToOnboardingState()
+                return
+            }
+            showsOnboarding = false
+        } catch {
+            if let localized = error as? LocalizedError, let description = localized.errorDescription {
+                errorMessage = description
+            } else {
+                errorMessage = "Failed to check insights. \(error)"
+            }
+            return
+        }
+
         if !forceRefresh, let cached = cachedInsightsByDayKey[targetDayKey] {
             apply(cached)
             errorMessage = nil
@@ -105,6 +139,20 @@ final class InsightsStore {
                 errorMessage = description
             } else {
                 errorMessage = "Failed to load insights. \(error)"
+            }
+        }
+    }
+
+    func showOnboardingIfNeeded() {
+        do {
+            if try !insightRepository.hasAnyInsights() {
+                resetToOnboardingState()
+            }
+        } catch {
+            if let localized = error as? LocalizedError, let description = localized.errorDescription {
+                errorMessage = description
+            } else {
+                errorMessage = "Failed to check insights. \(error)"
             }
         }
     }
@@ -187,6 +235,20 @@ final class InsightsStore {
         insightText = cached.content
         providerLabel = cached.providerLabel
         sourceDayKey = cached.sourceDayKey
+    }
+
+    private func resetToOnboardingState() {
+        loadTask?.cancel()
+        prefetchTasks.values.forEach { $0.cancel() }
+        prefetchTasks.removeAll()
+        cachedInsightsByDayKey.removeAll()
+        insightText = nil
+        providerLabel = nil
+        sourceDayKey = nil
+        isLoading = false
+        isRefreshing = false
+        errorMessage = nil
+        showsOnboarding = true
     }
 
     private func scheduleAdjacentPreload(around targetDate: Date, currentDayKey: String) {

@@ -19,6 +19,7 @@ struct InsightsView: View {
                             insightRepository: appContainer.insightRepository,
                             deviceId: appContainer.deviceId
                         )
+                        newStore.showOnboardingIfNeeded()
                         newStore.showCachedInsightIfAvailable(for: dayStore.localDayKey)
                         await newStore.loadOrGenerate(for: dayStore.selectedDate, targetDayKey: dayStore.settledDayKey)
                         store = newStore
@@ -44,7 +45,9 @@ private struct InsightsContentView: View {
 
                     ScrollView {
                         VStack(alignment: .leading, spacing: AppGlass.cardSpacing) {
-                            if store.isLoading && !store.isRefreshing {
+                            if store.showsOnboarding {
+                                onboardingCard
+                            } else if store.isLoading && !store.isRefreshing {
                                 statusCard(
                                     title: "Analyzing yesterday",
                                     message: "Building a fresh set of insights for today from your latest meals, goals, and body data.",
@@ -103,6 +106,7 @@ private struct InsightsContentView: View {
                 }
             }
             .refreshable {
+                guard !store.showsOnboarding else { return }
                 await store.loadOrGenerate(
                     for: dayStore.selectedDate,
                     targetDayKey: dayStore.localDayKey,
@@ -116,6 +120,7 @@ private struct InsightsContentView: View {
                 store.showCachedInsightIfAvailable(for: newValue)
             }
             .task(id: dayStore.settledDayKey) {
+                guard !store.showsOnboarding else { return }
                 await store.loadOrGenerate(for: dayStore.selectedDate, targetDayKey: dayStore.settledDayKey)
             }
         }
@@ -248,6 +253,35 @@ private struct InsightsContentView: View {
             Text("Open this tab to generate day-specific guidance from yesterday’s meals, today’s goals, and your saved profile.")
                 .foregroundStyle(AppGlass.textMuted)
                 .appBodyText()
+        }
+        .padding(AppGlass.heroPadding)
+        .glassPanel(cornerRadius: AppGlass.cardCornerRadius, weight: .primary)
+    }
+
+    private var onboardingCard: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            Text("Welcome to Insights")
+                .font(.system(size: 24, weight: .semibold, design: .rounded))
+                .foregroundStyle(AppGlass.textPrimary)
+
+            Text("When you’re ready, generate your first insight from yesterday’s meals, today’s goals, and your saved profile.")
+                .foregroundStyle(AppGlass.textMuted)
+                .appBodyText()
+
+            Button("Generate First Insight") {
+                Task {
+                    await store.loadOrGenerate(
+                        for: dayStore.selectedDate,
+                        targetDayKey: dayStore.settledDayKey,
+                        allowInitialGeneration: true
+                    )
+                }
+            }
+            .font(.system(size: 15, weight: .semibold, design: .rounded))
+            .foregroundStyle(AppGlass.textPrimary)
+            .frame(maxWidth: .infinity)
+            .frame(height: 52)
+            .glassPanel(cornerRadius: AppGlass.pillCornerRadius, weight: .primary)
         }
         .padding(AppGlass.heroPadding)
         .glassPanel(cornerRadius: AppGlass.cardCornerRadius, weight: .primary)
