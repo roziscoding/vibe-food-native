@@ -1,0 +1,10 @@
+{
+  "version": 1,
+  "skills": {
+    "ios-swift-development": {
+      "source": "aj-geddes/useful-ai-prompts",
+      "sourceType": "github",
+      "computedHash": "e6a01d7a205581893c603b05aa32efe1324b75c40d664a291d37810a10eac7d3"
+    }
+  }
+}
