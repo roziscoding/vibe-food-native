@@ -1,0 +1,112 @@
+{
+  "source": "/Users/roziscoding/github.com/roziscoding/vibe-food-native/Vibe Food/Vibe Food/Features/Insights/InsightsView.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "Select Date",
+        "location": {
+          "startingColumn": 34,
+          "startingLine": 76
+        }
+      },
+      {
+        "comment": "",
+        "key": "Date",
+        "location": {
+          "startingColumn": 25,
+          "startingLine": 65
+        }
+      },
+      {
+        "comment": "",
+        "key": "Done",
+        "location": {
+          "startingColumn": 32,
+          "startingLine": 79
+        }
+      },
+      {
+        "comment": "",
+        "key": "Insights",
+        "location": {
+          "startingColumn": 18,
+          "startingLine": 183
+        }
+      },
+      {
+        "comment": "",
+        "key": "Report",
+        "location": {
+          "startingColumn": 20,
+          "startingLine": 293
+        }
+      },
+      {
+        "comment": "",
+        "key": "Insights unavailable",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 284
+        }
+      },
+      {
+        "comment": "",
+        "key": "No insights yet",
+        "location": {
+          "startingColumn": 18,
+          "startingLine": 312
+        }
+      },
+      {
+        "comment": "",
+        "key": "Open this tab to generate day-specific guidance from yesterday’s meals, today’s goals, and your saved profile.",
+        "location": {
+          "startingColumn": 18,
+          "startingLine": 316
+        }
+      },
+      {
+        "comment": "",
+        "key": "Welcome to Insights",
+        "location": {
+          "startingColumn": 18,
+          "startingLine": 326
+        }
+      },
+      {
+        "comment": "",
+        "key": "When you’re ready, generate your first insight from yesterday’s meals, today’s goals, and your saved profile.",
+        "location": {
+          "startingColumn": 18,
+          "startingLine": 330
+        }
+      },
+      {
+        "comment": "",
+        "key": "Generate First Insight",
+        "location": {
+          "startingColumn": 20,
+          "startingLine": 334
+        }
+      },
+      {
+        "comment": "",
+        "key": "Today’s Read",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 395
+        }
+      },
+      {
+        "comment": "",
+        "key": "%lld",
+        "location": {
+          "startingColumn": 18,
+          "startingLine": 421
+        }
+      }
+    ]
+  },
+  "version": 1
+}

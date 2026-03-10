@@ -6,6 +6,7 @@ struct IngredientEditorView: View {
     var fieldErrors: [String: String]
     var onSave: () -> Void
     var onCancel: () -> Void
+    @State private var errorReportPayload: ExportPayload?
 
     var body: some View {
         NavigationStack {
@@ -44,9 +45,24 @@ struct IngredientEditorView: View {
 
                     if let errorMessage {
                         Section {
-                            Text(errorMessage)
-                                .foregroundStyle(.red)
-                                .font(.footnote)
+                            VStack(alignment: .leading, spacing: 6) {
+                                Text(errorMessage)
+                                    .foregroundStyle(.red)
+                                    .font(.footnote)
+
+                                Button("Report") {
+                                    Task {
+                                        errorReportPayload = try? await ErrorReportService.makePayload(
+                                            key: ErrorReportKey.ingredientsAlert,
+                                            fallbackFeature: "Ingredients",
+                                            fallbackOperation: "Save ingredient draft",
+                                            fallbackMessage: errorMessage
+                                        )
+                                    }
+                                }
+                                .font(.system(size: 12, weight: .semibold, design: .rounded))
+                                .foregroundStyle(AppGlass.accent)
+                            }
                         }
                     }
 
@@ -134,6 +150,9 @@ struct IngredientEditorView: View {
                         onSave()
                     }
                 }
+            }
+            .sheet(item: $errorReportPayload) { payload in
+                ShareSheet(items: [payload.url])
             }
         }
     }

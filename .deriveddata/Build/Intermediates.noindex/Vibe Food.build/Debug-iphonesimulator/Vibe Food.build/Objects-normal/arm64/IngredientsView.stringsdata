@@ -1,0 +1,208 @@
+{
+  "source": "/Users/roziscoding/github.com/roziscoding/vibe-food-native/Vibe Food/Vibe Food/Features/Ingredients/IngredientsView.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "Error",
+        "location": {
+          "startingColumn": 16,
+          "startingLine": 70
+        }
+      },
+      {
+        "comment": "",
+        "key": "Delete Ingredient",
+        "location": {
+          "startingColumn": 16,
+          "startingLine": 88
+        }
+      },
+      {
+        "comment": "",
+        "key": "Report",
+        "location": {
+          "startingColumn": 20,
+          "startingLine": 74
+        }
+      },
+      {
+        "comment": "",
+        "key": "OK",
+        "location": {
+          "startingColumn": 20,
+          "startingLine": 84
+        }
+      },
+      {
+        "comment": "",
+        "key": "Delete",
+        "location": {
+          "startingColumn": 20,
+          "startingLine": 92
+        }
+      },
+      {
+        "comment": "",
+        "key": "Cancel",
+        "location": {
+          "startingColumn": 20,
+          "startingLine": 95
+        }
+      },
+      {
+        "comment": "",
+        "key": "This will remove the ingredient from lists and pickers, but existing meals keep their snapshots.",
+        "location": {
+          "startingColumn": 18,
+          "startingLine": 99
+        }
+      },
+      {
+        "comment": "",
+        "key": "Import Ingredient",
+        "location": {
+          "startingColumn": 34,
+          "startingLine": 124
+        }
+      },
+      {
+        "comment": "",
+        "key": "Paste JSON",
+        "location": {
+          "startingColumn": 29,
+          "startingLine": 118
+        }
+      },
+      {
+        "comment": "",
+        "key": "Cancel",
+        "location": {
+          "startingColumn": 32,
+          "startingLine": 127
+        }
+      },
+      {
+        "comment": "",
+        "key": "Review",
+        "location": {
+          "startingColumn": 32,
+          "startingLine": 132
+        }
+      },
+      {
+        "comment": "",
+        "key": "Add Ingredient",
+        "location": {
+          "startingColumn": 36,
+          "startingLine": 208
+        }
+      },
+      {
+        "comment": "",
+        "key": "Scan Label",
+        "location": {
+          "startingColumn": 36,
+          "startingLine": 211
+        }
+      },
+      {
+        "comment": "",
+        "key": "Search ingredients",
+        "location": {
+          "startingColumn": 31,
+          "startingLine": 230
+        }
+      },
+      {
+        "comment": "",
+        "key": "Add your first ingredient or scan a label.",
+        "location": {
+          "startingColumn": 105,
+          "startingLine": 241
+        }
+      },
+      {
+        "comment": "",
+        "key": "No Ingredients",
+        "location": {
+          "startingColumn": 48,
+          "startingLine": 241
+        }
+      },
+      {
+        "comment": "",
+        "key": "%@ kcal",
+        "location": {
+          "startingColumn": 18,
+          "startingLine": 291
+        }
+      },
+      {
+        "comment": "",
+        "key": "·",
+        "location": {
+          "startingColumn": 18,
+          "startingLine": 293
+        }
+      },
+      {
+        "comment": "",
+        "key": "P %@g",
+        "location": {
+          "startingColumn": 18,
+          "startingLine": 295
+        }
+      },
+      {
+        "comment": "",
+        "key": "·",
+        "location": {
+          "startingColumn": 18,
+          "startingLine": 297
+        }
+      },
+      {
+        "comment": "",
+        "key": "C %@g",
+        "location": {
+          "startingColumn": 18,
+          "startingLine": 299
+        }
+      },
+      {
+        "comment": "",
+        "key": "·",
+        "location": {
+          "startingColumn": 18,
+          "startingLine": 301
+        }
+      },
+      {
+        "comment": "",
+        "key": "F %@g",
+        "location": {
+          "startingColumn": 18,
+          "startingLine": 303
+        }
+      },
+      {
+        "comment": "",
+        "key": "Report",
+        "location": {
+          "startingColumn": 36,
+          "startingLine": 403
+        }
+      },
+      {
+        "comment": "",
+        "key": "Close",
+        "location": {
+          "startingColumn": 36,
+          "startingLine": 419
+        }
+      }
+    ]
+  },
+  "version": 1
+}

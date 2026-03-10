@@ -15,6 +15,13 @@ protocol MealRepository {
     func softDelete(_ meal: MealRecord) throws
 }
 
+protocol WaterRepository {
+    func fetchEntries(localDayKey: String) throws -> [WaterEntryRecord]
+    func insert(_ entry: WaterEntryRecord) throws
+    func save() throws
+    func softDelete(_ entry: WaterEntryRecord) throws
+}
+
 protocol SettingsRepository {
     func fetchSettings() throws -> SettingsRecord?
     func insert(_ settings: SettingsRecord) throws
@@ -32,6 +39,13 @@ protocol InsightRepository {
     func hasAnyInsights() throws -> Bool
     func insert(_ insight: InsightRecord) throws
     func save() throws
+}
+
+protocol TodaySoFarRepository {
+    func fetchTodaySoFar(localDayKey: String) throws -> TodaySoFarRecord?
+    func insert(_ todaySoFar: TodaySoFarRecord) throws
+    func save() throws
+    func softDelete(_ todaySoFar: TodaySoFarRecord) throws
 }
 
 @MainActor
@@ -96,6 +110,39 @@ final class SwiftDataMealRepository: MealRepository {
 
     func softDelete(_ meal: MealRecord) throws {
         meal.deletedAt = Date()
+        try save()
+    }
+}
+
+@MainActor
+final class SwiftDataWaterRepository: WaterRepository {
+    private let context: ModelContext
+
+    init(context: ModelContext) {
+        self.context = context
+    }
+
+    func fetchEntries(localDayKey: String) throws -> [WaterEntryRecord] {
+        let descriptor = FetchDescriptor<WaterEntryRecord>(
+            predicate: #Predicate { $0.localDayKey == localDayKey && $0.deletedAt == nil },
+            sortBy: [SortDescriptor(\WaterEntryRecord.consumedAt, order: .reverse)]
+        )
+        return try context.fetch(descriptor)
+    }
+
+    func insert(_ entry: WaterEntryRecord) throws {
+        context.insert(entry)
+        try save()
+    }
+
+    func save() throws {
+        if context.hasChanges {
+            try context.save()
+        }
+    }
+
+    func softDelete(_ entry: WaterEntryRecord) throws {
+        entry.deletedAt = Date()
         try save()
     }
 }
@@ -185,5 +232,37 @@ final class SwiftDataInsightRepository: InsightRepository {
         if context.hasChanges {
             try context.save()
         }
+    }
+}
+
+@MainActor
+final class SwiftDataTodaySoFarRepository: TodaySoFarRepository {
+    private let context: ModelContext
+
+    init(context: ModelContext) {
+        self.context = context
+    }
+
+    func fetchTodaySoFar(localDayKey: String) throws -> TodaySoFarRecord? {
+        let descriptor = FetchDescriptor<TodaySoFarRecord>(
+            predicate: #Predicate { $0.localDayKey == localDayKey && $0.deletedAt == nil }
+        )
+        return try context.fetch(descriptor).first
+    }
+
+    func insert(_ todaySoFar: TodaySoFarRecord) throws {
+        context.insert(todaySoFar)
+        try save()
+    }
+
+    func save() throws {
+        if context.hasChanges {
+            try context.save()
+        }
+    }
+
+    func softDelete(_ todaySoFar: TodaySoFarRecord) throws {
+        todaySoFar.deletedAt = Date()
+        try save()
     }
 }

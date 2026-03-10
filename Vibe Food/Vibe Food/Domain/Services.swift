@@ -50,7 +50,8 @@ struct GoalRecommendationService {
         let calories = max(1200, round(maintenance + adjustment))
 
         let targets = macroTargets(for: input.objective, calories: calories, weightKg: input.weightKg)
-        return GoalRecommendationOutput(targets: targets)
+        let waterGoalMl = recommendedWaterGoalMl(for: input)
+        return GoalRecommendationOutput(targets: targets, waterGoalMl: waterGoalMl)
     }
 
     private func bmrValue(input: GoalRecommendationInput) -> Double {
@@ -134,5 +135,37 @@ struct GoalRecommendationService {
                 fat: max(1, round(fatRaw))
             )
         }
+    }
+
+    private func recommendedWaterGoalMl(for input: GoalRecommendationInput) -> Double {
+        let baseline = input.weightKg * 33
+        let activityBoost: Double
+
+        switch input.activityLevel {
+        case .sedentary:
+            activityBoost = 0
+        case .lowActive:
+            activityBoost = 250
+        case .active:
+            activityBoost = 500
+        case .veryActive:
+            activityBoost = 750
+        }
+
+        let objectiveBoost: Double
+        switch input.objective {
+        case .loseWeight:
+            objectiveBoost = 100
+        case .maintainWeight:
+            objectiveBoost = 0
+        case .gainWeight:
+            objectiveBoost = 150
+        case .muscle:
+            objectiveBoost = 250
+        }
+
+        let rawGoal = baseline + activityBoost + objectiveBoost
+        let rounded = (rawGoal / 50).rounded() * 50
+        return max(1200, min(6000, rounded))
     }
 }

@@ -1,0 +1,30 @@
+{
+  "/Users/roziscoding/github.com/roziscoding/vibe-food-native/Vibe Food/Vibe Food/Features/Settings/SettingsStore.swift" : {
+    "const-values" : "/Users/roziscoding/github.com/roziscoding/vibe-food-native/.deriveddata/Build/Intermediates.noindex/Vibe Food.build/Debug-iphonesimulator/Vibe Food.build/Objects-normal/arm64/SettingsStore.swiftconstvalues",
+    "dependencies" : "/Users/roziscoding/github.com/roziscoding/vibe-food-native/.deriveddata/Build/Intermediates.noindex/Vibe Food.build/Debug-iphonesimulator/Vibe Food.build/Objects-normal/arm64/SettingsStore.d",
+    "diagnostics" : "/Users/roziscoding/github.com/roziscoding/vibe-food-native/.deriveddata/Build/Intermediates.noindex/Vibe Food.build/Debug-iphonesimulator/Vibe Food.build/Objects-normal/arm64/SettingsStore.dia",
+    "object" : "/Users/roziscoding/github.com/roziscoding/vibe-food-native/.deriveddata/Build/Intermediates.noindex/Vibe Food.build/Debug-iphonesimulator/Vibe Food.build/Objects-normal/arm64/SettingsStore.o",
+    "swift-dependencies" : "/Users/roziscoding/github.com/roziscoding/vibe-food-native/.deriveddata/Build/Intermediates.noindex/Vibe Food.build/Debug-iphonesimulator/Vibe Food.build/Objects-normal/arm64/SettingsStore.swiftdeps"
+  },
+  "/Users/roziscoding/github.com/roziscoding/vibe-food-native/Vibe Food/Vibe Food/Features/Settings/SettingsView.swift" : {
+    "const-values" : "/Users/roziscoding/github.com/roziscoding/vibe-food-native/.deriveddata/Build/Intermediates.noindex/Vibe Food.build/Debug-iphonesimulator/Vibe Food.build/Objects-normal/arm64/SettingsView.swiftconstvalues",
+    "dependencies" : "/Users/roziscoding/github.com/roziscoding/vibe-food-native/.deriveddata/Build/Intermediates.noindex/Vibe Food.build/Debug-iphonesimulator/Vibe Food.build/Objects-normal/arm64/SettingsView.d",
+    "diagnostics" : "/Users/roziscoding/github.com/roziscoding/vibe-food-native/.deriveddata/Build/Intermediates.noindex/Vibe Food.build/Debug-iphonesimulator/Vibe Food.build/Objects-normal/arm64/SettingsView.dia",
+    "object" : "/Users/roziscoding/github.com/roziscoding/vibe-food-native/.deriveddata/Build/Intermediates.noindex/Vibe Food.build/Debug-iphonesimulator/Vibe Food.build/Objects-normal/arm64/SettingsView.o",
+    "swift-dependencies" : "/Users/roziscoding/github.com/roziscoding/vibe-food-native/.deriveddata/Build/Intermediates.noindex/Vibe Food.build/Debug-iphonesimulator/Vibe Food.build/Objects-normal/arm64/SettingsView.swiftdeps"
+  },
+  "/Users/roziscoding/github.com/roziscoding/vibe-food-native/Vibe Food/Vibe Food/Features/Shared/AppDataChangeNotifier.swift" : {
+    "const-values" : "/Users/roziscoding/github.com/roziscoding/vibe-food-native/.deriveddata/Build/Intermediates.noindex/Vibe Food.build/Debug-iphonesimulator/Vibe Food.build/Objects-normal/arm64/AppDataChangeNotifier.swiftconstvalues",
+    "dependencies" : "/Users/roziscoding/github.com/roziscoding/vibe-food-native/.deriveddata/Build/Intermediates.noindex/Vibe Food.build/Debug-iphonesimulator/Vibe Food.build/Objects-normal/arm64/AppDataChangeNotifier.d",
+    "diagnostics" : "/Users/roziscoding/github.com/roziscoding/vibe-food-native/.deriveddata/Build/Intermediates.noindex/Vibe Food.build/Debug-iphonesimulator/Vibe Food.build/Objects-normal/arm64/AppDataChangeNotifier.dia",
+    "object" : "/Users/roziscoding/github.com/roziscoding/vibe-food-native/.deriveddata/Build/Intermediates.noindex/Vibe Food.build/Debug-iphonesimulator/Vibe Food.build/Objects-normal/arm64/AppDataChangeNotifier.o",
+    "swift-dependencies" : "/Users/roziscoding/github.com/roziscoding/vibe-food-native/.deriveddata/Build/Intermediates.noindex/Vibe Food.build/Debug-iphonesimulator/Vibe Food.build/Objects-normal/arm64/AppDataChangeNotifier.swiftdeps"
+  },
+  "/Users/roziscoding/github.com/roziscoding/vibe-food-native/Vibe Food/Vibe Food/Features/Shared/AppGlass.swift" : {
+    "const-values" : "/Users/roziscoding/github.com/roziscoding/vibe-food-native/.deriveddata/Build/Intermediates.noindex/Vibe Food.build/Debug-iphonesimulator/Vibe Food.build/Objects-normal/arm64/AppGlass.swiftconstvalues",
+    "dependencies" : "/Users/roziscoding/github.com/roziscoding/vibe-food-native/.deriveddata/Build/Intermediates.noindex/Vibe Food.build/Debug-iphonesimulator/Vibe Food.build/Objects-normal/arm64/AppGlass.d",
+    "diagnostics" : "/Users/roziscoding/github.com/roziscoding/vibe-food-native/.deriveddata/Build/Intermediates.noindex/Vibe Food.build/Debug-iphonesimulator/Vibe Food.build/Objects-normal/arm64/AppGlass.dia",
+    "object" : "/Users/roziscoding/github.com/roziscoding/vibe-food-native/.deriveddata/Build/Intermediates.noindex/Vibe Food.build/Debug-iphonesimulator/Vibe Food.build/Objects-normal/arm64/AppGlass.o",
+    "swift-dependencies" : "/Users/roziscoding/github.com/roziscoding/vibe-food-native/.deriveddata/Build/Intermediates.noindex/Vibe Food.build/Debug-iphonesimulator/Vibe Food.build/Objects-normal/arm64/AppGlass.swiftdeps"
+  }
+}

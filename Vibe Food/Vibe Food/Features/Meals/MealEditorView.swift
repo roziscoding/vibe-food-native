@@ -2,6 +2,7 @@ import SwiftUI
 
 struct MealEditorView: View {
     @Bindable var store: MealsStore
+    @State private var errorReportPayload: ExportPayload?
 
     var body: some View {
         NavigationStack {
@@ -12,9 +13,24 @@ struct MealEditorView: View {
                     Form {
                     if let errorMessage = store.draftError {
                         Section {
-                            Text(errorMessage)
-                                .foregroundStyle(.red)
-                                .font(.footnote)
+                            VStack(alignment: .leading, spacing: 6) {
+                                Text(errorMessage)
+                                    .foregroundStyle(.red)
+                                    .font(.footnote)
+
+                                Button("Report") {
+                                    Task {
+                                        errorReportPayload = try? await ErrorReportService.makePayload(
+                                            key: ErrorReportKey.mealsDraft,
+                                            fallbackFeature: "Meals",
+                                            fallbackOperation: "Save meal draft",
+                                            fallbackMessage: errorMessage
+                                        )
+                                    }
+                                }
+                                .font(.system(size: 12, weight: .semibold, design: .rounded))
+                                .foregroundStyle(AppGlass.accent)
+                            }
                         }
                     }
 
@@ -135,6 +151,9 @@ struct MealEditorView: View {
                         ToolbarItem(placement: .confirmationAction) {
                             Button("Save") { store.saveDraft() }
                         }
+                    }
+                    .sheet(item: $errorReportPayload) { payload in
+                        ShareSheet(items: [payload.url])
                     }
                 }
             }

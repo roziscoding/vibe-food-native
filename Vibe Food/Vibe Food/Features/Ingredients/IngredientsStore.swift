@@ -1,6 +1,7 @@
 import Foundation
 import Observation
 import UIKit
+import os
 
 @MainActor
 @Observable
@@ -8,6 +9,8 @@ final class IngredientsStore {
     private let repository: IngredientRepository
     private let aiIntegrationRepository: AIIntegrationRepository
     private let deviceId: String
+    private let logger = Logger(subsystem: "ninja.roz.vibefood", category: "IngredientsStore")
+    private var hasLoadedOnce: Bool = false
     private let derivationService = NutritionDerivationService()
     private let importService = IngredientImportService()
     private let scanService = LabelScanService()
@@ -50,11 +53,20 @@ final class IngredientsStore {
         return ingredients.filter { $0.name.localizedCaseInsensitiveContains(trimmed) }
     }
 
+    func loadIfNeeded() {
+        guard !hasLoadedOnce else { return }
+        load()
+    }
+
     func load() {
+        logger.info("load() started.")
         do {
             ingredients = try repository.fetchActiveIngredients()
+            hasLoadedOnce = true
+            logger.info("load() finished. ingredientCount=\(self.ingredients.count, privacy: .public)")
         } catch {
-            errorMessage = "Failed to load ingredients."
+            logger.error("load() failed: \(error.localizedDescription, privacy: .public)")
+            setAlertError("Failed to load ingredients.", operation: "Load ingredients", error: error)
         }
     }
 
@@ -144,10 +156,11 @@ final class IngredientsStore {
 
             load()
             cancelEdit()
+            AppDataChangeNotifier.post(.ingredients)
         } catch ValidationError.invalidValue {
-            errorMessage = "Please enter valid, non-negative values."
+            setAlertError("Please enter valid, non-negative values.", operation: "Save ingredient validation")
         } catch {
-            errorMessage = "Failed to save ingredient."
+            setAlertError("Failed to save ingredient.", operation: "Save ingredient", error: error)
         }
     }
 
@@ -169,8 +182,9 @@ final class IngredientsStore {
         do {
             try repository.softDelete(ingredient)
             load()
+            AppDataChangeNotifier.post(.ingredients)
         } catch {
-            errorMessage = "Failed to delete ingredient."
+            setAlertError("Failed to delete ingredient.", operation: "Delete ingredient", error: error)
         }
     }
 
@@ -206,6 +220,7 @@ final class IngredientsStore {
         isPresentingScanStatus = true
         isProcessingScan = true
         defer { isProcessingScan = false }
+        var scanInput = "Notes: User-selected nutrition label image"
         do {
             let integration = try? aiIntegrationRepository.fetchIntegration()
             if let integration, !integration.apiKey.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
@@ -213,6 +228,11 @@ final class IngredientsStore {
             } else {
                 scanProviderLabel = "Local model"
             }
+            scanInput = """
+            Provider: \(scanProviderLabel)
+            Image size: \(Int(image.size.width))x\(Int(image.size.height))
+            Notes: User-selected nutrition label image
+            """
 
             let result = try await scanService.scan(image: image, integration: integration)
             draft = result.draft
@@ -220,12 +240,23 @@ final class IngredientsStore {
             scanOutput = result.outputText
             scanPhase = .success
             shouldPresentEditorAfterScan = true
+            dismissScanStatus()
         } catch {
             if let localized = error as? LocalizedError, let description = localized.errorDescription {
                 scanError = description
             } else {
                 scanError = "Failed to scan label. \(error)"
             }
+            ErrorReportService.capture(
+                key: ErrorReportKey.ingredientsScan,
+                feature: "Ingredients",
+                operation: "Scan nutrition label",
+                userMessage: scanError ?? "Scan failed.",
+                error: error,
+                llmInput: scanInput,
+                llmOutput: scanOutput,
+                llmProvider: scanProviderLabel
+            )
             scanPhase = .failure
         }
     }
@@ -251,7 +282,7 @@ final class IngredientsStore {
     func importFromJSONText() {
         let trimmed = importJSONText.trimmingCharacters(in: .whitespacesAndNewlines)
         guard let data = trimmed.data(using: .utf8), !trimmed.isEmpty else {
-            errorMessage = "Paste valid JSON to import."
+            setAlertError("Paste valid JSON to import.", operation: "Import ingredient JSON text")
             return
         }
         importFromData(data)
@@ -265,7 +296,7 @@ final class IngredientsStore {
             isPresentingImportSheet = false
             isPresentingEditor = true
         } catch {
-            errorMessage = "Failed to parse ingredient JSON."
+            setAlertError("Failed to parse ingredient JSON.", operation: "Parse ingredient JSON import", error: error)
         }
     }
 
@@ -280,7 +311,18 @@ final class IngredientsStore {
             try data.write(to: url, options: .atomic)
             exportPayload = ExportPayload(url: url)
         } catch {
-            errorMessage = "Failed to export ingredients."
+            setAlertError("Failed to export ingredients.", operation: "Export ingredients", error: error)
         }
+    }
+
+    private func setAlertError(_ message: String, operation: String, error: Error? = nil) {
+        errorMessage = message
+        ErrorReportService.capture(
+            key: ErrorReportKey.ingredientsAlert,
+            feature: "Ingredients",
+            operation: operation,
+            userMessage: message,
+            error: error
+        )
     }
 }

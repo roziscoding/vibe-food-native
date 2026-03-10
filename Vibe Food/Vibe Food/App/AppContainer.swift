@@ -8,10 +8,14 @@ final class AppContainer: ObservableObject {
     let modelContainer: ModelContainer
     let ingredientRepository: IngredientRepository
     let mealRepository: MealRepository
+    let waterRepository: WaterRepository
     let settingsRepository: SettingsRepository
     let aiIntegrationRepository: AIIntegrationRepository
     let insightRepository: InsightRepository
+    let todaySoFarRepository: TodaySoFarRepository
     let resetService: ResetService
+    let settingsStore: SettingsStore
+    let ingredientsStore: IngredientsStore
 
     var deviceId: String {
         deviceIdentityStore.deviceId
@@ -25,10 +29,12 @@ final class AppContainer: ObservableObject {
         let schema = Schema([
             IngredientRecord.self,
             MealRecord.self,
+            WaterEntryRecord.self,
             MealIngredientSnapshotRecord.self,
             SettingsRecord.self,
             AIIntegrationRecord.self,
-            InsightRecord.self
+            InsightRecord.self,
+            TodaySoFarRecord.self
         ])
         let configuration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
 
@@ -41,10 +47,24 @@ final class AppContainer: ObservableObject {
         let context = modelContainer.mainContext
         ingredientRepository = SwiftDataIngredientRepository(context: context)
         mealRepository = SwiftDataMealRepository(context: context)
+        waterRepository = SwiftDataWaterRepository(context: context)
         settingsRepository = SwiftDataSettingsRepository(context: context)
         aiIntegrationRepository = SwiftDataAIIntegrationRepository(context: context)
         insightRepository = SwiftDataInsightRepository(context: context)
+        todaySoFarRepository = SwiftDataTodaySoFarRepository(context: context)
         resetService = ResetService(context: context)
+
+        settingsStore = SettingsStore(
+            repository: settingsRepository,
+            aiRepository: aiIntegrationRepository,
+            context: context,
+            deviceId: self.deviceIdentityStore.deviceId
+        )
+        ingredientsStore = IngredientsStore(
+            repository: ingredientRepository,
+            aiIntegrationRepository: aiIntegrationRepository,
+            deviceId: self.deviceIdentityStore.deviceId
+        )
     }
 
     func resetAllData() throws {
@@ -66,6 +86,9 @@ final class AppContainer: ObservableObject {
                     proteinGoal: 150,
                     carbsGoal: 250,
                     fatGoal: 70,
+                    waterGoal: 2000,
+                    showsInsights: true,
+                    showsTodaySoFarBanner: true,
                     lastModifiedByDeviceId: deviceId
                 )
                 context.insert(settings)

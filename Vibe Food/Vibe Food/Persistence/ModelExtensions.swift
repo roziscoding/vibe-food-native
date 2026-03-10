@@ -16,6 +16,14 @@ extension MealRecord {
     }
 }
 
+extension WaterEntryRecord {
+    func touch(updatedBy deviceId: String) {
+        updatedAt = Date()
+        lastModifiedByDeviceId = deviceId
+        syncVersion += 1
+    }
+}
+
 extension SettingsRecord {
     func touch(updatedBy deviceId: String) {
         updatedAt = Date()
@@ -33,6 +41,14 @@ extension AIIntegrationRecord {
 }
 
 extension InsightRecord {
+    func touch(updatedBy deviceId: String) {
+        updatedAt = Date()
+        lastModifiedByDeviceId = deviceId
+        syncVersion += 1
+    }
+}
+
+extension TodaySoFarRecord {
     func touch(updatedBy deviceId: String) {
         updatedAt = Date()
         lastModifiedByDeviceId = deviceId

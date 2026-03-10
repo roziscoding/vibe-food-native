@@ -130,6 +130,44 @@ final class MealRecord {
 }
 
 @Model
+final class WaterEntryRecord {
+    var id: UUID
+    var amountMl: Double
+    var consumedAt: Date
+    var timeZoneIdentifier: String
+    var localDayKey: String
+    var createdAt: Date
+    var updatedAt: Date
+    var deletedAt: Date?
+    var lastModifiedByDeviceId: String
+    var syncVersion: Int
+
+    init(
+        id: UUID = UUID(),
+        amountMl: Double,
+        consumedAt: Date,
+        timeZoneIdentifier: String,
+        localDayKey: String,
+        createdAt: Date = Date(),
+        updatedAt: Date = Date(),
+        deletedAt: Date? = nil,
+        lastModifiedByDeviceId: String,
+        syncVersion: Int = 1
+    ) {
+        self.id = id
+        self.amountMl = amountMl
+        self.consumedAt = consumedAt
+        self.timeZoneIdentifier = timeZoneIdentifier
+        self.localDayKey = localDayKey
+        self.createdAt = createdAt
+        self.updatedAt = updatedAt
+        self.deletedAt = deletedAt
+        self.lastModifiedByDeviceId = lastModifiedByDeviceId
+        self.syncVersion = syncVersion
+    }
+}
+
+@Model
 final class MealIngredientSnapshotRecord {
     var id: UUID
     var sourceIngredientID: UUID?
@@ -162,6 +200,10 @@ final class SettingsRecord {
     var proteinGoal: Double
     var carbsGoal: Double
     var fatGoal: Double
+    var waterGoal: Double?
+    var waterQuickAmountsCsv: String?
+    var showsInsights: Bool?
+    var showsTodaySoFarBanner: Bool?
     var age: Int?
     var heightCm: Double?
     var weightKg: Double?
@@ -180,6 +222,10 @@ final class SettingsRecord {
         proteinGoal: Double,
         carbsGoal: Double,
         fatGoal: Double,
+        waterGoal: Double? = 2000,
+        waterQuickAmountsCsv: String? = WaterQuickAmountsConfig.serialize(WaterQuickAmountsConfig.defaultValues),
+        showsInsights: Bool? = true,
+        showsTodaySoFarBanner: Bool? = true,
         age: Int? = nil,
         heightCm: Double? = nil,
         weightKg: Double? = nil,
@@ -197,6 +243,10 @@ final class SettingsRecord {
         self.proteinGoal = proteinGoal
         self.carbsGoal = carbsGoal
         self.fatGoal = fatGoal
+        self.waterGoal = waterGoal
+        self.waterQuickAmountsCsv = waterQuickAmountsCsv
+        self.showsInsights = showsInsights
+        self.showsTodaySoFarBanner = showsTodaySoFarBanner
         self.age = age
         self.heightCm = heightCm
         self.weightKg = weightKg
@@ -266,6 +316,41 @@ final class InsightRecord {
         self.id = id
         self.targetLocalDayKey = targetLocalDayKey
         self.sourceLocalDayKey = sourceLocalDayKey
+        self.content = content
+        self.providerLabel = providerLabel
+        self.updatedAt = updatedAt
+        self.deletedAt = deletedAt
+        self.lastModifiedByDeviceId = lastModifiedByDeviceId
+        self.syncVersion = syncVersion
+    }
+}
+
+@Model
+final class TodaySoFarRecord {
+    var id: String
+    var localDayKey: String
+    var mealSignature: String
+    var content: String
+    var providerLabel: String
+    var updatedAt: Date
+    var deletedAt: Date?
+    var lastModifiedByDeviceId: String
+    var syncVersion: Int
+
+    init(
+        id: String,
+        localDayKey: String,
+        mealSignature: String,
+        content: String,
+        providerLabel: String,
+        updatedAt: Date = Date(),
+        deletedAt: Date? = nil,
+        lastModifiedByDeviceId: String,
+        syncVersion: Int = 1
+    ) {
+        self.id = id
+        self.localDayKey = localDayKey
+        self.mealSignature = mealSignature
         self.content = content
         self.providerLabel = providerLabel
         self.updatedAt = updatedAt

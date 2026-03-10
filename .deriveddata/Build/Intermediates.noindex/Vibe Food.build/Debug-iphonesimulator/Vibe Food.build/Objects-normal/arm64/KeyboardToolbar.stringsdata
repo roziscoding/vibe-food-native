@@ -1,0 +1,16 @@
+{
+  "source": "/Users/roziscoding/github.com/roziscoding/vibe-food-native/Vibe Food/Vibe Food/Features/Shared/KeyboardToolbar.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "Done",
+        "location": {
+          "startingColumn": 24,
+          "startingLine": 9
+        }
+      }
+    ]
+  },
+  "version": 1
+}

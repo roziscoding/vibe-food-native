@@ -1,0 +1,64 @@
+{
+  "source": "/Users/roziscoding/github.com/roziscoding/vibe-food-native/Vibe Food/Vibe Food/Features/Input/InputView.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "Error",
+        "location": {
+          "startingColumn": 20,
+          "startingLine": 51
+        }
+      },
+      {
+        "comment": "",
+        "key": "Report",
+        "location": {
+          "startingColumn": 24,
+          "startingLine": 55
+        }
+      },
+      {
+        "comment": "",
+        "key": "OK",
+        "location": {
+          "startingColumn": 24,
+          "startingLine": 65
+        }
+      },
+      {
+        "comment": "",
+        "key": "Quick add water for the selected day.",
+        "location": {
+          "startingColumn": 18,
+          "startingLine": 79
+        }
+      },
+      {
+        "comment": "",
+        "key": "Log meals quickly, with AI or manually.",
+        "location": {
+          "startingColumn": 18,
+          "startingLine": 107
+        }
+      },
+      {
+        "comment": "",
+        "key": "Scan a label or add ingredient details manually.",
+        "location": {
+          "startingColumn": 18,
+          "startingLine": 138
+        }
+      },
+      {
+        "comment": "",
+        "key": "+%lld ml",
+        "location": {
+          "startingColumn": 18,
+          "startingLine": 169
+        }
+      }
+    ]
+  },
+  "version": 1
+}

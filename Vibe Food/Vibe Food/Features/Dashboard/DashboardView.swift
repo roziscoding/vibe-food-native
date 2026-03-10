@@ -14,7 +14,10 @@ struct DashboardView: View {
                     .task {
                         let newStore = DashboardStore(
                             mealRepository: appContainer.mealRepository,
-                            settingsRepository: appContainer.settingsRepository
+                            waterRepository: appContainer.waterRepository,
+                            settingsRepository: appContainer.settingsRepository,
+                            insightRepository: appContainer.insightRepository,
+                            deviceId: appContainer.deviceId
                         )
                         newStore.load(for: dayStore.localDayKey)
                         newStore.preloadAdjacentDays(around: dayStore.selectedDate)
@@ -27,11 +30,11 @@ struct DashboardView: View {
 
 private struct DashboardContentView: View {
     private static let showsMealsSection = false
+    private static let bottomContentPadding: CGFloat = 120
 
     @Environment(DaySelectionStore.self) private var dayStore
     @Bindable var store: DashboardStore
-    @State private var scrollViewportHeight: CGFloat = 0
-    @State private var scrollContentHeight: CGFloat = 0
+    @State private var errorReportPayload: ExportPayload?
 
     var body: some View {
         NavigationStack {
@@ -39,60 +42,48 @@ private struct DashboardContentView: View {
                 AppGlassBackground()
 
                 VStack(spacing: AppGlass.cardSpacing) {
-                    AppScreenHeader(title: "Dashboard")
+                    AppScreenHeader(title: "Overview")
                         .padding(.horizontal, 20)
                         .padding(.top, 20)
 
                     DaySelectorView()
                         .padding(.horizontal, 20)
 
-                    GeometryReader { geometry in
-                        ScrollView {
-                            VStack(alignment: .leading, spacing: AppGlass.cardSpacing) {
-                                summarySection
+                    ScrollView {
+                        VStack(alignment: .leading, spacing: AppGlass.cardSpacing) {
+                            summarySection
 
-                                if Self.showsMealsSection {
-                                    mealsSection
-                                }
+                            if Self.showsMealsSection {
+                                mealsSection
+                            }
 
-                                Spacer(minLength: 0)
-                            }
-                            .background {
-                                GeometryReader { contentGeometry in
-                                    Color.clear
-                                        .preference(
-                                            key: DashboardScrollContentHeightKey.self,
-                                            value: contentGeometry.size.height
-                                        )
-                                }
-                            }
-                            .padding(.horizontal, 20)
-                            .padding(.bottom, 120)
+                            insightsSection
                         }
-                        .background(Color.clear)
-                        .onAppear {
-                            scrollViewportHeight = geometry.size.height
-                        }
-                        .onChange(of: geometry.size.height) { _, newValue in
-                            scrollViewportHeight = newValue
-                        }
-                        .onPreferenceChange(DashboardScrollContentHeightKey.self) { newValue in
-                            scrollContentHeight = newValue
-                        }
-                        .scrollDisabled(!isDashboardScrollable || dayStore.isScrollLockedForDaySwipe)
-                        .onScrollPhaseChange { _, newPhase in
-                            dayStore.setVerticalScrollActive(isDashboardScrollable && newPhase.isScrolling)
-                        }
-                        .offset(x: dayStore.horizontalDragOffset)
-                        .contentShape(Rectangle())
-                        .simultaneousGesture(daySwipeGesture)
-                        .scrollIndicators(.hidden)
+                        .padding(.horizontal, 20)
+                        .padding(.bottom, Self.bottomContentPadding)
                     }
+                    .frame(maxHeight: .infinity, alignment: .top)
+                    .background(Color.clear)
+                    .scrollBounceBehavior(.basedOnSize)
+                    .scrollDisabled(dayStore.isScrollLockedForDaySwipe)
+                    .onScrollPhaseChange { _, newPhase in
+                        dayStore.setVerticalScrollActive(newPhase.isScrolling)
+                    }
+                    .offset(x: dayStore.horizontalDragOffset)
+                    .contentShape(Rectangle())
+                    .simultaneousGesture(daySwipeGesture)
+                    .scrollIndicators(.hidden)
                 }
             }
             .toolbar(.hidden, for: .navigationBar)
             .onAppear {
                 store.load(for: dayStore.localDayKey)
+                store.preloadAdjacentDays(around: dayStore.selectedDate)
+            }
+            .onReceive(NotificationCenter.default.publisher(for: AppDataChangeNotifier.notificationName)) { notification in
+                guard let kind = AppDataChangeNotifier.kind(from: notification) else { return }
+                guard kind == .meals || kind == .settings || kind == .water else { return }
+                store.reload(for: dayStore.localDayKey)
                 store.preloadAdjacentDays(around: dayStore.selectedDate)
             }
             .onChange(of: dayStore.localDayKey) { _, newValue in
@@ -103,15 +94,24 @@ private struct DashboardContentView: View {
                 get: { store.errorMessage != nil },
                 set: { _ in store.errorMessage = nil }
             )) {
+                Button("Report") {
+                    Task {
+                        errorReportPayload = try? await ErrorReportService.makePayload(
+                            key: ErrorReportKey.dashboardAlert,
+                            fallbackFeature: "Dashboard",
+                            fallbackOperation: "Present error alert",
+                            fallbackMessage: store.errorMessage ?? "Unknown error"
+                        )
+                    }
+                }
                 Button("OK", role: .cancel) { }
             } message: {
                 Text(store.errorMessage ?? "Unknown error")
             }
+            .sheet(item: $errorReportPayload) { payload in
+                ShareSheet(items: [payload.url])
+            }
         }
-    }
-
-    private var isDashboardScrollable: Bool {
-        scrollContentHeight > scrollViewportHeight + 1
     }
 
     private var daySwipeGesture: some Gesture {
@@ -142,17 +142,69 @@ private struct DashboardContentView: View {
 
             HStack(spacing: 12) {
                 summaryCard(title: "Calories", value: totals.calories, goal: store.goals.calories, unit: "kcal", color: MacroColors.calories)
-                summaryCard(title: "Protein", value: totals.protein, goal: store.goals.protein, unit: "g", color: MacroColors.protein)
-            }
-            HStack(spacing: 12) {
-                summaryCard(title: "Carbs", value: totals.carbs, goal: store.goals.carbs, unit: "g", color: MacroColors.carbs)
-                summaryCard(title: "Fat", value: totals.fat, goal: store.goals.fat, unit: "g", color: MacroColors.fat)
+                summaryCard(title: "Water", value: store.waterTotalMl, goal: store.waterGoalMl, unit: "ml", color: .cyan)
             }
 
             macroDistributionCard(totals: totals)
             remainingTodayCard(totals: totals)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    private var insightsSection: some View {
+        VStack(alignment: .leading, spacing: AppGlass.sectionSpacing) {
+            AppSectionTitle(title: "Insights")
+
+            if store.showsInsights {
+                VStack(alignment: .leading, spacing: 14) {
+                    if let insightPreview = store.insightPreview {
+                        Text(insightPreview.summary)
+                            .foregroundStyle(AppGlass.textSecondary)
+                            .font(.system(size: 16, weight: .medium, design: .rounded))
+                            .lineLimit(4)
+
+                        Text("Generated with \(insightPreview.providerLabel)")
+                            .font(.system(size: 12, weight: .medium, design: .rounded))
+                            .foregroundStyle(AppGlass.textSubtle)
+                    } else {
+                        Text("No insight generated for this day yet. Open full insights to generate one.")
+                            .foregroundStyle(AppGlass.textSecondary)
+                            .appBodyText()
+                    }
+
+                    NavigationLink {
+                        InsightsView(presentation: .embedded)
+                    } label: {
+                        HStack(spacing: 8) {
+                            Image(systemName: "sparkles")
+                                .font(.system(size: 14, weight: .semibold))
+                            Text("See Full Insights")
+                                .font(.system(size: 15, weight: .semibold, design: .rounded))
+                        }
+                        .foregroundStyle(AppGlass.textPrimary)
+                        .frame(maxWidth: .infinity)
+                        .frame(height: 48)
+                    }
+                    .buttonStyle(.plain)
+                    .glassPanel(cornerRadius: AppGlass.pillCornerRadius, weight: .secondary)
+                }
+                .padding(16)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .glassPanel(cornerRadius: AppGlass.cardCornerRadius, weight: .primary)
+            } else {
+                VStack(alignment: .leading, spacing: 10) {
+                    Text("Insights are disabled")
+                        .font(.system(size: 18, weight: .semibold, design: .rounded))
+                        .foregroundStyle(AppGlass.textPrimary)
+                    Text("Enable Insights in Settings to see AI guidance directly on your overview.")
+                        .foregroundStyle(AppGlass.textMuted)
+                        .appBodyText()
+                }
+                .padding(16)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .glassPanel(cornerRadius: AppGlass.cardCornerRadius, weight: .primary)
+            }
+        }
     }
 
     private var mealsSection: some View {
@@ -225,19 +277,34 @@ private struct DashboardContentView: View {
         let proteinShare = totalMacroCalories > 0 ? proteinCalories / totalMacroCalories : 0
         let carbsShare = totalMacroCalories > 0 ? carbsCalories / totalMacroCalories : 0
         let fatShare = totalMacroCalories > 0 ? fatCalories / totalMacroCalories : 0
-        let segments = [
-            MacroSplitSegment(title: "Protein", value: totals.protein, share: proteinShare, color: MacroColors.protein),
-            MacroSplitSegment(title: "Carbs", value: totals.carbs, share: carbsShare, color: MacroColors.carbs),
-            MacroSplitSegment(title: "Fat", value: totals.fat, share: fatShare, color: MacroColors.fat)
-        ]
-        let segmentStarts = [
-            0.0,
-            proteinShare,
-            proteinShare + carbsShare
-        ]
-
         return VStack(alignment: .leading, spacing: 10) {
-            AppSectionTitle(title: "Macro Split")
+            AppSectionTitle(title: "Macros")
+
+            HStack(alignment: .top, spacing: 14) {
+                macroGoalChip(
+                    title: "Protein",
+                    value: totals.protein,
+                    goal: store.goals.protein,
+                    color: MacroColors.protein
+                )
+                macroGoalChip(
+                    title: "Carbs",
+                    value: totals.carbs,
+                    goal: store.goals.carbs,
+                    color: MacroColors.carbs
+                )
+                macroGoalChip(
+                    title: "Fat",
+                    value: totals.fat,
+                    goal: store.goals.fat,
+                    color: MacroColors.fat
+                )
+            }
+
+            Text("Macro Split")
+                .font(.system(size: 11, weight: .bold, design: .rounded))
+                .foregroundStyle(AppGlass.textSubtle)
+                .textCase(.uppercase)
 
             GeometryReader { geometry in
                 let width = geometry.size.width
@@ -266,30 +333,10 @@ private struct DashboardContentView: View {
             }
             .frame(height: 14)
 
-            if totalMacroCalories > 0 {
-                GeometryReader { geometry in
-                    let width = geometry.size.width
-
-                    ZStack(alignment: .topLeading) {
-                        ForEach(Array(segments.enumerated()), id: \.element.id) { index, segment in
-                            macroSplitLabel(
-                                title: segment.title,
-                                value: segment.value,
-                                share: segment.share,
-                                color: segment.color
-                            )
-                            .frame(width: max(88, width * segment.share), alignment: .leading)
-                            .offset(x: width * segmentStarts[index])
-                        }
-                    }
-                }
-                .frame(height: 44)
-            } else {
-                HStack(spacing: 12) {
-                    ForEach(segments) { segment in
-                        macroSplitLabel(title: segment.title, value: segment.value, share: segment.share, color: segment.color)
-                    }
-                }
+            HStack(spacing: 12) {
+                splitShareLabel(title: "Protein", share: proteinShare, color: MacroColors.protein)
+                splitShareLabel(title: "Carbs", share: carbsShare, color: MacroColors.carbs)
+                splitShareLabel(title: "Fat", share: fatShare, color: MacroColors.fat)
             }
 
             if totalMacroCalories == 0 {
@@ -303,8 +350,41 @@ private struct DashboardContentView: View {
         .glassPanel(cornerRadius: AppGlass.cardCornerRadius, weight: .primary)
     }
 
+    private func splitShareLabel(title: String, share: Double, color: Color) -> some View {
+        HStack(spacing: 5) {
+            Circle()
+                .fill(color)
+                .frame(width: 7, height: 7)
+            Text("\(title) \(share, format: .percent.precision(.fractionLength(0)))")
+                .font(.system(size: 12, weight: .semibold, design: .rounded))
+                .foregroundStyle(AppGlass.textSecondary)
+                .lineLimit(1)
+                .minimumScaleFactor(0.8)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    private func macroGoalChip(title: String, value: Double, goal: Double, color: Color) -> some View {
+        let progress = goal > 0 ? value / goal : 0
+
+        return VStack(alignment: .leading, spacing: 4) {
+            Text(title)
+                .font(.system(size: 11, weight: .bold, design: .rounded))
+                .foregroundStyle(color)
+                .textCase(.uppercase)
+            Text("\(value, format: .number)g / \(goal, format: .number)g")
+                .font(.system(size: 13, weight: .semibold, design: .rounded))
+                .foregroundStyle(AppGlass.textPrimary)
+            Text(goal > 0 ? "\(progress, format: .percent.precision(.fractionLength(0))) of goal" : "No goal set")
+                .font(.system(size: 11, weight: .semibold, design: .rounded))
+                .foregroundStyle(AppGlass.textMuted)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
     private func remainingTodayCard(totals: MacroBreakdown) -> some View {
         let remainingCalories = max(0.0, store.goals.calories - totals.calories)
+        let remainingWater = max(0.0, store.waterGoalMl - store.waterTotalMl)
         let remainingProtein = max(0.0, store.goals.protein - totals.protein)
         let remainingCarbs = max(0.0, store.goals.carbs - totals.carbs)
         let remainingFat = max(0.0, store.goals.fat - totals.fat)
@@ -319,13 +399,18 @@ private struct DashboardContentView: View {
                     color: MacroColors.calories
                 )
                 remainingMetricChip(
-                    title: "Protein",
-                    valueText: "\(remainingProtein.formatted(.number)) g",
-                    color: MacroColors.protein
+                    title: "Water",
+                    valueText: "\(remainingWater.formatted(.number)) ml",
+                    color: .cyan
                 )
             }
 
             HStack(spacing: 12) {
+                remainingMetricChip(
+                    title: "Protein",
+                    valueText: "\(remainingProtein.formatted(.number)) g",
+                    color: MacroColors.protein
+                )
                 remainingMetricChip(
                     title: "Carbs",
                     valueText: "\(remainingCarbs.formatted(.number)) g",
@@ -343,21 +428,6 @@ private struct DashboardContentView: View {
         .glassPanel(cornerRadius: AppGlass.cardCornerRadius, weight: .primary)
     }
 
-    private func macroSplitLabel(title: String, value: Double, share: Double, color: Color) -> some View {
-        VStack(alignment: .leading, spacing: 2) {
-            Text(title)
-                .font(.system(size: 12, weight: .bold, design: .rounded))
-                .foregroundStyle(color)
-            Text("\(value, format: .number)g")
-                .font(.system(size: 12, weight: .medium, design: .rounded))
-                .foregroundStyle(AppGlass.textSecondary)
-            Text("\(share, format: .percent.precision(.fractionLength(0)))")
-                .font(.system(size: 11, weight: .medium, design: .rounded))
-                .foregroundStyle(AppGlass.textSubtle)
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-    }
-
     private func remainingMetricChip(title: String, valueText: String, color: Color) -> some View {
         VStack(alignment: .leading, spacing: 4) {
             Text(title)
@@ -372,22 +442,6 @@ private struct DashboardContentView: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .glassPanel(cornerRadius: 16, weight: .secondary)
     }
-}
-
-private struct DashboardScrollContentHeightKey: PreferenceKey {
-    static var defaultValue: CGFloat = 0
-
-    static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) {
-        value = nextValue()
-    }
-}
-
-private struct MacroSplitSegment: Identifiable {
-    let id = UUID()
-    let title: String
-    let value: Double
-    let share: Double
-    let color: Color
 }
 
 #Preview {

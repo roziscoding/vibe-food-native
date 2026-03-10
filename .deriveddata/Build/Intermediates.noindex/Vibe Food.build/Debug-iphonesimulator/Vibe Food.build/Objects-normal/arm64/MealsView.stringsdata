@@ -1,0 +1,240 @@
+{
+  "source": "/Users/roziscoding/github.com/roziscoding/vibe-food-native/Vibe Food/Vibe Food/Features/Meals/MealsView.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "Error",
+        "location": {
+          "startingColumn": 16,
+          "startingLine": 95
+        }
+      },
+      {
+        "comment": "",
+        "key": "Delete Meal",
+        "location": {
+          "startingColumn": 16,
+          "startingLine": 113
+        }
+      },
+      {
+        "comment": "",
+        "key": "Report",
+        "location": {
+          "startingColumn": 20,
+          "startingLine": 99
+        }
+      },
+      {
+        "comment": "",
+        "key": "OK",
+        "location": {
+          "startingColumn": 20,
+          "startingLine": 109
+        }
+      },
+      {
+        "comment": "",
+        "key": "Delete",
+        "location": {
+          "startingColumn": 20,
+          "startingLine": 117
+        }
+      },
+      {
+        "comment": "",
+        "key": "Cancel",
+        "location": {
+          "startingColumn": 20,
+          "startingLine": 120
+        }
+      },
+      {
+        "comment": "",
+        "key": "This will remove the meal from your history.",
+        "location": {
+          "startingColumn": 18,
+          "startingLine": 124
+        }
+      },
+      {
+        "comment": "",
+        "key": "Import Meal",
+        "location": {
+          "startingColumn": 34,
+          "startingLine": 144
+        }
+      },
+      {
+        "comment": "",
+        "key": "Paste JSON",
+        "location": {
+          "startingColumn": 29,
+          "startingLine": 138
+        }
+      },
+      {
+        "comment": "",
+        "key": "Cancel",
+        "location": {
+          "startingColumn": 32,
+          "startingLine": 147
+        }
+      },
+      {
+        "comment": "",
+        "key": "Review",
+        "location": {
+          "startingColumn": 32,
+          "startingLine": 152
+        }
+      },
+      {
+        "comment": "",
+        "key": "Add Meal",
+        "location": {
+          "startingColumn": 36,
+          "startingLine": 220
+        }
+      },
+      {
+        "comment": "",
+        "key": "Log with AI",
+        "location": {
+          "startingColumn": 36,
+          "startingLine": 223
+        }
+      },
+      {
+        "comment": "",
+        "key": "Add a meal for this day.",
+        "location": {
+          "startingColumn": 105,
+          "startingLine": 250
+        }
+      },
+      {
+        "comment": "",
+        "key": "No meals",
+        "location": {
+          "startingColumn": 48,
+          "startingLine": 250
+        }
+      },
+      {
+        "comment": "",
+        "key": "Report",
+        "location": {
+          "startingColumn": 32,
+          "startingLine": 382
+        }
+      },
+      {
+        "comment": "",
+        "key": "·",
+        "location": {
+          "startingColumn": 18,
+          "startingLine": 466
+        }
+      },
+      {
+        "comment": "",
+        "key": "%@ kcal",
+        "location": {
+          "startingColumn": 18,
+          "startingLine": 468
+        }
+      },
+      {
+        "comment": "",
+        "key": "·",
+        "location": {
+          "startingColumn": 18,
+          "startingLine": 470
+        }
+      },
+      {
+        "comment": "",
+        "key": "P %@g",
+        "location": {
+          "startingColumn": 18,
+          "startingLine": 472
+        }
+      },
+      {
+        "comment": "",
+        "key": "·",
+        "location": {
+          "startingColumn": 18,
+          "startingLine": 474
+        }
+      },
+      {
+        "comment": "",
+        "key": "C %@g",
+        "location": {
+          "startingColumn": 18,
+          "startingLine": 476
+        }
+      },
+      {
+        "comment": "",
+        "key": "·",
+        "location": {
+          "startingColumn": 18,
+          "startingLine": 478
+        }
+      },
+      {
+        "comment": "",
+        "key": "F %@g",
+        "location": {
+          "startingColumn": 18,
+          "startingLine": 480
+        }
+      },
+      {
+        "comment": "",
+        "key": "e.g. Chicken salad",
+        "location": {
+          "startingColumn": 39,
+          "startingLine": 505
+        }
+      },
+      {
+        "comment": "",
+        "key": "Cancel",
+        "location": {
+          "startingColumn": 28,
+          "startingLine": 542
+        }
+      },
+      {
+        "comment": "",
+        "key": "Analyze",
+        "location": {
+          "startingColumn": 28,
+          "startingLine": 547
+        }
+      },
+      {
+        "comment": "",
+        "key": "Report",
+        "location": {
+          "startingColumn": 36,
+          "startingLine": 599
+        }
+      },
+      {
+        "comment": "",
+        "key": "Close",
+        "location": {
+          "startingColumn": 36,
+          "startingLine": 615
+        }
+      }
+    ]
+  },
+  "version": 1
+}

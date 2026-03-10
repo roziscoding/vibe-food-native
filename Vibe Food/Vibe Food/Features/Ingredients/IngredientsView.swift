@@ -2,204 +2,282 @@ import SwiftUI
 import PhotosUI
 import UIKit
 import UniformTypeIdentifiers
+import os
+
+private let ingredientsViewLogger = Logger(subsystem: "ninja.roz.vibefood", category: "IngredientsView")
+
+enum IngredientsPresentation {
+    case tab
+    case embedded
+}
+
+enum IngredientsQuickAction {
+    case addManual
+    case scanLabel
+}
 
 struct IngredientsView: View {
     @EnvironmentObject private var appContainer: AppContainer
-    @State private var store: IngredientsStore?
+    let presentation: IngredientsPresentation
+    let quickAction: IngredientsQuickAction?
+
+    init(presentation: IngredientsPresentation = .tab, quickAction: IngredientsQuickAction? = nil) {
+        self.presentation = presentation
+        self.quickAction = quickAction
+    }
 
     var body: some View {
-        Group {
-            if let store {
-                IngredientsListView(store: store)
-            } else {
-                ProgressView()
-                    .task {
-                        let newStore = IngredientsStore(
-                            repository: appContainer.ingredientRepository,
-                            aiIntegrationRepository: appContainer.aiIntegrationRepository,
-                            deviceId: appContainer.deviceId
-                        )
-                        newStore.load()
-                        store = newStore
-                    }
-            }
+        IngredientsListView(store: appContainer.ingredientsStore, presentation: presentation, quickAction: quickAction)
+        .onAppear {
+            ingredientsViewLogger.info("onAppear. loading ingredients store if needed.")
+            appContainer.ingredientsStore.loadIfNeeded()
+        }
+        .onDisappear {
+            ingredientsViewLogger.debug("onDisappear")
         }
     }
 }
 
 private struct IngredientsListView: View {
+    @Environment(\.dismiss) private var dismiss
     @Bindable var store: IngredientsStore
+    let presentation: IngredientsPresentation
+    let quickAction: IngredientsQuickAction?
     @State private var photoItem: PhotosPickerItem?
     @State private var cameraImage: UIImage?
+    @State private var hasAppliedQuickAction = false
+    @State private var errorReportPayload: ExportPayload?
 
     var body: some View {
-        NavigationStack {
-            ZStack {
-                AppGlassBackground()
-
-                VStack(spacing: AppGlass.cardSpacing) {
-                    AppScreenHeader(
-                        title: "Ingredients",
-                        trailing: AnyView(
-                            Menu {
-                                Button("Add Ingredient") {
-                                    store.beginCreate()
-                                }
-                                Button("Scan Label") {
-                                    store.beginScan()
-                                }
-                            } label: {
-                                Image(systemName: "plus")
-                                    .font(.headline.weight(.semibold))
-                                    .appIconGlow(active: true)
-                                    .frame(width: 48, height: 48)
-                                    .glassPanel(cornerRadius: AppGlass.pillCornerRadius, weight: .secondary)
-                            }
-                        )
+        Group {
+            if presentation == .tab {
+                NavigationStack {
+                    content
+                }
+            } else {
+                content
+            }
+        }
+        .toolbar(.hidden, for: .navigationBar)
+        .onAppear {
+            applyQuickActionIfNeeded()
+        }
+        .onReceive(NotificationCenter.default.publisher(for: AppDataChangeNotifier.notificationName)) { notification in
+            guard let kind = AppDataChangeNotifier.kind(from: notification) else { return }
+            guard kind == .ingredients else { return }
+            store.load()
+        }
+        .alert("Error", isPresented: Binding(
+            get: { store.errorMessage != nil },
+            set: { _ in store.errorMessage = nil }
+        )) {
+            Button("Report") {
+                Task {
+                    errorReportPayload = try? await ErrorReportService.makePayload(
+                        key: ErrorReportKey.ingredientsAlert,
+                        fallbackFeature: "Ingredients",
+                        fallbackOperation: "Present error alert",
+                        fallbackMessage: store.errorMessage ?? "Unknown error"
                     )
+                }
+            }
+            Button("OK", role: .cancel) { }
+        } message: {
+            Text(store.errorMessage ?? "Unknown error")
+        }
+        .alert("Delete Ingredient", isPresented: Binding(
+            get: { store.pendingDelete != nil },
+            set: { _ in store.cancelDelete() }
+        )) {
+            Button("Delete", role: .destructive) {
+                store.deletePending()
+            }
+            Button("Cancel", role: .cancel) {
+                store.cancelDelete()
+            }
+        } message: {
+            Text("This will remove the ingredient from lists and pickers, but existing meals keep their snapshots.")
+        }
+        .sheet(isPresented: $store.isPresentingEditor) {
+            if let draft = store.draft {
+                IngredientEditorView(
+                    draft: Binding(
+                        get: { draft },
+                        set: { store.draft = $0 }
+                    ),
+                    errorMessage: store.draftError,
+                    fieldErrors: store.fieldErrors,
+                    onSave: { store.saveDraft() },
+                    onCancel: { store.cancelEdit() }
+                )
+            }
+        }
+        .sheet(isPresented: $store.isPresentingImportSheet) {
+            NavigationStack {
+                Form {
+                    Section("Paste JSON") {
+                        TextEditor(text: $store.importJSONText)
+                            .frame(minHeight: 200)
+                            .font(.footnote)
+                    }
+                }
+                .navigationTitle("Import Ingredient")
+                .toolbar {
+                    ToolbarItem(placement: .cancellationAction) {
+                        Button("Cancel") {
+                            store.isPresentingImportSheet = false
+                        }
+                    }
+                    ToolbarItem(placement: .confirmationAction) {
+                        Button("Review") {
+                            store.importFromJSONText()
+                        }
+                    }
+                }
+            }
+        }
+        .fileImporter(
+            isPresented: $store.isPresentingFileImporter,
+            allowedContentTypes: [.json]
+        ) { result in
+            switch result {
+            case .success(let url):
+                do {
+                    let data = try Data(contentsOf: url)
+                    store.importFromData(data)
+                } catch {
+                    store.errorMessage = "Failed to read JSON file."
+                    ErrorReportService.capture(
+                        key: ErrorReportKey.ingredientsAlert,
+                        feature: "Ingredients",
+                        operation: "Read ingredient JSON file",
+                        userMessage: store.errorMessage ?? "Failed to read JSON file.",
+                        error: error
+                    )
+                }
+            case .failure:
+                store.errorMessage = "Failed to import JSON file."
+                ErrorReportService.capture(
+                    key: ErrorReportKey.ingredientsAlert,
+                    feature: "Ingredients",
+                    operation: "Open ingredient file importer",
+                    userMessage: store.errorMessage ?? "Failed to import JSON file."
+                )
+            }
+        }
+        .sheet(item: $store.exportPayload) { payload in
+            ShareSheet(items: [payload.url])
+        }
+        .sheet(item: $errorReportPayload) { payload in
+            ShareSheet(items: [payload.url])
+        }
+        .modifier(ScanPresentationModifier(
+            store: store,
+            photoItem: $photoItem,
+            cameraImage: $cameraImage
+        ))
+    }
+
+    private var content: some View {
+        ZStack {
+            AppGlassBackground()
+
+            VStack(spacing: AppGlass.cardSpacing) {
+                if presentation == .embedded {
+                    HStack {
+                        Button {
+                            dismiss()
+                        } label: {
+                            Image(systemName: "chevron.left")
+                                .font(.headline.weight(.semibold))
+                                .appIconGlow(active: true)
+                                .frame(width: 48, height: 48)
+                                .glassPanel(cornerRadius: AppGlass.pillCornerRadius, weight: .secondary)
+                        }
+                        .buttonStyle(.plain)
+                        Spacer()
+                    }
                     .padding(.horizontal, 20)
                     .padding(.top, 20)
+                }
 
-                    HStack(spacing: 10) {
-                        Image(systemName: "magnifyingglass")
-                            .appIconGlow(active: false)
-
-                        TextField("Search ingredients", text: $store.searchText)
-                            .foregroundStyle(AppGlass.textPrimary)
-                            .tint(AppGlass.accent)
-                    }
-                    .padding(.horizontal, 16)
-                    .frame(height: 50)
-                    .glassPanel(cornerRadius: AppGlass.pillCornerRadius, weight: .secondary)
-                    .padding(.horizontal, 20)
-
-                    List {
-                        if store.filteredIngredients.isEmpty {
-                            ContentUnavailableView("No Ingredients", systemImage: "leaf", description: Text("Add your first ingredient or scan a label."))
-                                .foregroundStyle(AppGlass.textSecondary, AppGlass.textMuted, AppGlass.textSubtle)
-                                .frame(maxWidth: .infinity, minHeight: 280)
-                                .glassPanel(cornerRadius: AppGlass.cardCornerRadius, weight: .primary)
-                                .listRowInsets(EdgeInsets(top: 24, leading: 20, bottom: 96, trailing: 20))
-                                .listRowBackground(Color.clear)
-                                .listRowSeparator(.hidden)
-                        } else {
-                            VStack(spacing: 0) {
-                                ForEach(Array(store.filteredIngredients.enumerated()), id: \.element.id) { index, ingredient in
-                                    VStack(alignment: .leading, spacing: 6) {
-                                        Text(ingredient.name)
-                                            .font(.system(size: 18, weight: .semibold, design: .rounded))
-                                            .foregroundStyle(AppGlass.textPrimary)
-                                        macroLineView(for: ingredient)
-                                    }
-                                    .padding(16)
-                                    .frame(maxWidth: .infinity, alignment: .leading)
-                                    .contentShape(Rectangle())
-                                    .onTapGesture {
-                                        store.beginEdit(ingredient)
-                                    }
-
-                                    if index < store.filteredIngredients.count - 1 {
-                                        Divider()
-                                            .overlay(AppGlass.secondaryBorder)
-                                            .padding(.horizontal, 16)
-                                    }
-                                }
+                AppScreenHeader(
+                    title: "Ingredients",
+                    trailing: AnyView(
+                        Menu {
+                            Button("Add Ingredient") {
+                                store.beginCreate()
                             }
-                            .glassPanel(cornerRadius: AppGlass.cardCornerRadius, weight: .secondary)
-                            .listRowInsets(EdgeInsets(top: 8, leading: 20, bottom: 8, trailing: 20))
+                            Button("Scan Label") {
+                                store.beginScan()
+                            }
+                        } label: {
+                            Image(systemName: "plus")
+                                .font(.headline.weight(.semibold))
+                                .appIconGlow(active: true)
+                                .frame(width: 48, height: 48)
+                                .glassPanel(cornerRadius: AppGlass.pillCornerRadius, weight: .secondary)
+                        }
+                    )
+                )
+                .padding(.horizontal, 20)
+                .padding(.top, presentation == .embedded ? 8 : 20)
+
+                HStack(spacing: 10) {
+                    Image(systemName: "magnifyingglass")
+                        .appIconGlow(active: false)
+
+                    TextField("Search ingredients", text: $store.searchText)
+                        .foregroundStyle(AppGlass.textPrimary)
+                        .tint(AppGlass.accent)
+                }
+                .padding(.horizontal, 16)
+                .frame(height: 50)
+                .glassPanel(cornerRadius: AppGlass.pillCornerRadius, weight: .secondary)
+                .padding(.horizontal, 20)
+
+                List {
+                    if store.filteredIngredients.isEmpty {
+                        ContentUnavailableView("No Ingredients", systemImage: "leaf", description: Text("Add your first ingredient or scan a label."))
+                            .foregroundStyle(AppGlass.textSecondary, AppGlass.textMuted, AppGlass.textSubtle)
+                            .frame(maxWidth: .infinity, minHeight: 280)
+                            .glassPanel(cornerRadius: AppGlass.cardCornerRadius, weight: .primary)
+                            .listRowInsets(EdgeInsets(top: 24, leading: 20, bottom: 96, trailing: 20))
                             .listRowBackground(Color.clear)
                             .listRowSeparator(.hidden)
-                        }
-                    }
-                    .listStyle(.plain)
-                    .scrollContentBackground(.hidden)
-                    .background(Color.clear)
-                }
-            }
-            .toolbar(.hidden, for: .navigationBar)
-            .alert("Error", isPresented: Binding(
-                get: { store.errorMessage != nil },
-                set: { _ in store.errorMessage = nil }
-            )) {
-                Button("OK", role: .cancel) { }
-            } message: {
-                Text(store.errorMessage ?? "Unknown error")
-            }
-            .alert("Delete Ingredient", isPresented: Binding(
-                get: { store.pendingDelete != nil },
-                set: { _ in store.cancelDelete() }
-            )) {
-                Button("Delete", role: .destructive) {
-                    store.deletePending()
-                }
-                Button("Cancel", role: .cancel) {
-                    store.cancelDelete()
-                }
-            } message: {
-                Text("This will remove the ingredient from lists and pickers, but existing meals keep their snapshots.")
-            }
-            .sheet(isPresented: $store.isPresentingEditor) {
-                if let draft = store.draft {
-                    IngredientEditorView(
-                        draft: Binding(
-                            get: { draft },
-                            set: { store.draft = $0 }
-                        ),
-                        errorMessage: store.draftError,
-                        fieldErrors: store.fieldErrors,
-                        onSave: { store.saveDraft() },
-                        onCancel: { store.cancelEdit() }
-                    )
-                }
-            }
-            .sheet(isPresented: $store.isPresentingImportSheet) {
-                NavigationStack {
-                    Form {
-                        Section("Paste JSON") {
-                            TextEditor(text: $store.importJSONText)
-                                .frame(minHeight: 200)
-                                .font(.footnote)
-                        }
-                    }
-                    .navigationTitle("Import Ingredient")
-                    .toolbar {
-                        ToolbarItem(placement: .cancellationAction) {
-                            Button("Cancel") {
-                                store.isPresentingImportSheet = false
+                    } else {
+                        VStack(spacing: 0) {
+                            ForEach(Array(store.filteredIngredients.enumerated()), id: \.element.id) { index, ingredient in
+                                VStack(alignment: .leading, spacing: 6) {
+                                    Text(ingredient.name)
+                                        .font(.system(size: 18, weight: .semibold, design: .rounded))
+                                        .foregroundStyle(AppGlass.textPrimary)
+                                    macroLineView(for: ingredient)
+                                }
+                                .padding(16)
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                                .contentShape(Rectangle())
+                                .onTapGesture {
+                                    store.beginEdit(ingredient)
+                                }
+
+                                if index < store.filteredIngredients.count - 1 {
+                                    Divider()
+                                        .overlay(AppGlass.secondaryBorder)
+                                        .padding(.horizontal, 16)
+                                }
                             }
                         }
-                        ToolbarItem(placement: .confirmationAction) {
-                            Button("Review") {
-                                store.importFromJSONText()
-                            }
-                        }
+                        .glassPanel(cornerRadius: AppGlass.cardCornerRadius, weight: .secondary)
+                        .listRowInsets(EdgeInsets(top: 8, leading: 20, bottom: 8, trailing: 20))
+                        .listRowBackground(Color.clear)
+                        .listRowSeparator(.hidden)
                     }
                 }
+                .listStyle(.plain)
+                .scrollContentBackground(.hidden)
+                .background(Color.clear)
             }
-            .fileImporter(
-                isPresented: $store.isPresentingFileImporter,
-                allowedContentTypes: [.json]
-            ) { result in
-                switch result {
-                case .success(let url):
-                    do {
-                        let data = try Data(contentsOf: url)
-                        store.importFromData(data)
-                    } catch {
-                        store.errorMessage = "Failed to read JSON file."
-                    }
-                case .failure:
-                    store.errorMessage = "Failed to import JSON file."
-                }
-            }
-            .sheet(item: $store.exportPayload) { payload in
-                ShareSheet(items: [payload.url])
-            }
-            .modifier(ScanPresentationModifier(
-                store: store,
-                photoItem: $photoItem,
-                cameraImage: $cameraImage
-            ))
         }
     }
 
@@ -226,6 +304,17 @@ private struct IngredientsListView: View {
                 .foregroundStyle(MacroColors.fat)
         }
         .font(.system(size: 13, weight: .medium, design: .rounded))
+    }
+
+    private func applyQuickActionIfNeeded() {
+        guard !hasAppliedQuickAction, let quickAction else { return }
+        hasAppliedQuickAction = true
+        switch quickAction {
+        case .addManual:
+            store.beginCreate()
+        case .scanLabel:
+            store.beginScan()
+        }
     }
 }
 
@@ -254,6 +343,12 @@ private struct ScanPresentationModifier: ViewModifier {
                         await store.handleScanImage(image)
                     } else {
                         store.scanError = "Failed to load photo."
+                        ErrorReportService.capture(
+                            key: ErrorReportKey.ingredientsScan,
+                            feature: "Ingredients",
+                            operation: "Load selected scan photo",
+                            userMessage: store.scanError ?? "Failed to load photo."
+                        )
                     }
                     photoItem = nil
                 }
@@ -266,6 +361,7 @@ private struct ScanPresentationModifier: ViewModifier {
 
 private struct ScanStatusView: View {
     @Bindable var store: IngredientsStore
+    @State private var errorReportPayload: ExportPayload?
 
     var body: some View {
         NavigationStack {
@@ -290,7 +386,7 @@ private struct ScanStatusView: View {
                             .multilineTextAlignment(.center)
                     }
 
-                    if let output = store.scanOutput, !output.isEmpty {
+                    if let output = store.scanOutput, !output.isEmpty, store.scanPhase == .failure {
                         ScrollView {
                             Text(output)
                                 .font(.footnote.monospaced())
@@ -301,20 +397,46 @@ private struct ScanStatusView: View {
                         }
                         .frame(maxHeight: 260)
                     }
+
+                    if store.scanPhase == .failure {
+                        VStack(spacing: 10) {
+                            Button("Report") {
+                                Task {
+                                    errorReportPayload = try? await ErrorReportService.makePayload(
+                                        key: ErrorReportKey.ingredientsScan,
+                                        fallbackFeature: "Ingredients",
+                                        fallbackOperation: "Scan nutrition label",
+                                        fallbackMessage: store.scanError ?? "Scan failed"
+                                    )
+                                }
+                            }
+                            .font(.system(size: 15, weight: .semibold, design: .rounded))
+                            .foregroundStyle(AppGlass.textPrimary)
+                            .frame(maxWidth: .infinity)
+                            .frame(height: 48)
+                            .glassPanel(cornerRadius: AppGlass.pillCornerRadius, weight: .secondary)
+
+                            Button("Close") {
+                                store.dismissScanStatus()
+                            }
+                            .font(.system(size: 15, weight: .semibold, design: .rounded))
+                            .foregroundStyle(AppGlass.textPrimary)
+                            .frame(maxWidth: .infinity)
+                            .frame(height: 48)
+                            .glassPanel(cornerRadius: AppGlass.pillCornerRadius, weight: .secondary)
+                        }
+                    }
                 }
                 .padding(24)
                 .glassPanel(cornerRadius: AppGlass.cardCornerRadius, weight: .primary)
                 .padding(24)
             }
-            .toolbar(.hidden, for: .navigationBar)
-            .toolbar {
-                if store.scanPhase != .processing {
-                    ToolbarItem(placement: .topBarTrailing) {
-                        Button(store.scanPhase == .failure ? "Close" : "Continue") {
-                            store.dismissScanStatus()
-                        }
-                    }
-                }
+            .onChange(of: store.scanPhase) { _, newPhase in
+                guard newPhase == .success else { return }
+                store.dismissScanStatus()
+            }
+            .sheet(item: $errorReportPayload) { payload in
+                ShareSheet(items: [payload.url])
             }
         }
     }

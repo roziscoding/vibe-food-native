@@ -9,8 +9,8 @@ final class InsightsStore {
     private let aiIntegrationRepository: AIIntegrationRepository
     private let insightRepository: InsightRepository
     private let deviceId: String
-    private let summaryService = DailySummaryService()
     private let insightsService = InsightsService()
+    private let inputBuilder = InsightInputBuilder()
     private var cachedInsightsByDayKey: [String: CachedInsight] = [:]
     private var prefetchTasks: [String: Task<Void, Never>] = [:]
 
@@ -93,9 +93,9 @@ final class InsightsStore {
             showsOnboarding = false
         } catch {
             if let localized = error as? LocalizedError, let description = localized.errorDescription {
-                errorMessage = description
+                setError(description, operation: "Check insights availability", error: error)
             } else {
-                errorMessage = "Failed to check insights. \(error)"
+                setError("Failed to check insights. \(error)", operation: "Check insights availability", error: error)
             }
             return
         }
@@ -136,9 +136,9 @@ final class InsightsStore {
             errorMessage = nil
         } catch {
             if let localized = error as? LocalizedError, let description = localized.errorDescription {
-                errorMessage = description
+                setError(description, operation: "Load or generate insights", error: error)
             } else {
-                errorMessage = "Failed to load insights. \(error)"
+                setError("Failed to load insights. \(error)", operation: "Load or generate insights", error: error)
             }
         }
     }
@@ -150,9 +150,9 @@ final class InsightsStore {
             }
         } catch {
             if let localized = error as? LocalizedError, let description = localized.errorDescription {
-                errorMessage = description
+                setError(description, operation: "Check onboarding insights state", error: error)
             } else {
-                errorMessage = "Failed to check insights. \(error)"
+                setError("Failed to check insights. \(error)", operation: "Check onboarding insights state", error: error)
             }
         }
     }
@@ -171,40 +171,32 @@ final class InsightsStore {
         let previousDate = previousDay(from: targetDate)
         let previousDayKey = LocalDayKey.key(for: previousDate, timeZone: .current)
         let previousMeals = try mealRepository.fetchMeals(localDayKey: previousDayKey)
-        let goals = try fetchGoals()
-        let summary = summaryService.summary(for: previousMeals, goals: goals)
-        let profile = try fetchProfile()
-
-        let input = InsightGenerationInput(
+        let goals = try inputBuilder.fetchGoals(settingsRepository: settingsRepository)
+        let profile = try inputBuilder.fetchProfile(settingsRepository: settingsRepository)
+        let input = inputBuilder.makeInput(
             targetDay: targetDayKey,
             sourceDay: previousDayKey,
-            profile: profile,
-            goals: .init(
-                calories: goals.calories,
-                protein: goals.protein,
-                carbs: goals.carbs,
-                fat: goals.fat
-            ),
-            previousDayTotals: .init(
-                calories: summary.totals.calories,
-                protein: summary.totals.protein,
-                carbs: summary.totals.carbs,
-                fat: summary.totals.fat
-            ),
-            previousDayMeals: previousMeals.map {
-                InsightGenerationInput.MealPayload(
-                    name: $0.name,
-                    calories: $0.calories,
-                    protein: $0.protein,
-                    carbs: $0.carbs,
-                    fat: $0.fat,
-                    time: AppFormatters.shortTime.string(from: $0.consumedAt)
-                )
-            }
+            meals: previousMeals,
+            goals: goals,
+            profile: profile
         )
 
         let integration = try aiIntegrationRepository.fetchIntegration()
-        let result = try await insightsService.generateInsights(input: input, integration: integration)
+        let result: InsightsService.InsightResult
+        do {
+            result = try await insightsService.generateInsights(input: input, integration: integration)
+        } catch {
+            ErrorReportService.capture(
+                key: ErrorReportKey.insightsStatus,
+                feature: "Insights",
+                operation: "Generate insights",
+                userMessage: "Failed to generate insights.",
+                error: error,
+                llmInput: makeInsightInputLog(input: input),
+                llmProvider: providerLabel(for: integration)
+            )
+            throw error
+        }
 
         if let existing {
             existing.sourceLocalDayKey = previousDayKey
@@ -286,42 +278,39 @@ final class InsightsStore {
         return dates
     }
 
-    private func fetchGoals() throws -> MacroTargets {
-        if let settings = try settingsRepository.fetchSettings() {
-            return MacroTargets(
-                calories: settings.calorieGoal,
-                protein: settings.proteinGoal,
-                carbs: settings.carbsGoal,
-                fat: settings.fatGoal
-            )
-        }
-
-        return MacroTargets(calories: 2000, protein: 150, carbs: 250, fat: 70)
+    private func previousDay(from date: Date) -> Date {
+        Calendar.current.date(byAdding: .day, value: -1, to: date) ?? date
     }
 
-    private func fetchProfile() throws -> InsightGenerationInput.ProfilePayload? {
-        guard let settings = try settingsRepository.fetchSettings(),
-              let age = settings.age,
-              let heightCm = settings.heightCm,
-              let weightKg = settings.weightKg,
-              let sex = settings.sex,
-              let activityLevel = settings.activityLevel,
-              let objective = settings.objective else {
-            return nil
-        }
-
-        return InsightGenerationInput.ProfilePayload(
-            age: age,
-            heightCm: heightCm,
-            weightKg: weightKg,
-            sex: sex.rawValue,
-            activityLevel: activityLevel.rawValue,
-            objective: objective.rawValue
+    private func setError(_ message: String, operation: String, error: Error? = nil) {
+        errorMessage = message
+        ErrorReportService.capture(
+            key: ErrorReportKey.insightsStatus,
+            feature: "Insights",
+            operation: operation,
+            userMessage: message,
+            error: error,
+            llmOutput: insightText,
+            llmProvider: providerLabel
         )
     }
 
-    private func previousDay(from date: Date) -> Date {
-        Calendar.current.date(byAdding: .day, value: -1, to: date) ?? date
+    private func providerLabel(for integration: AIIntegrationRecord?) -> String {
+        guard let integration,
+              !integration.apiKey.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+            return "Local model"
+        }
+        return integration.provider == .openai ? "OpenAI" : "Anthropic"
+    }
+
+    private func makeInsightInputLog(input: InsightGenerationInput) -> String {
+        let encoder = JSONEncoder()
+        encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
+        guard let data = try? encoder.encode(input),
+              let text = String(data: data, encoding: .utf8) else {
+            return "Failed to encode insights input payload."
+        }
+        return text
     }
 }
 private struct CachedInsight {

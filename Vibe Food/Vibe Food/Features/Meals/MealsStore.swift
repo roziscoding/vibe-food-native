@@ -7,17 +7,31 @@ import SwiftData
 final class MealsStore {
     private let mealRepository: MealRepository
     private let ingredientRepository: IngredientRepository
+    private let todaySoFarRepository: TodaySoFarRepository
+    private let settingsRepository: SettingsRepository
     private let aiIntegrationRepository: AIIntegrationRepository
     private let context: ModelContext
     private let deviceId: String
     private let importService = MealImportService()
     private let derivationService = NutritionDerivationService()
     private let aiLogService = MealAILogService()
+    private let insightsService = InsightsService()
+    private let insightInputBuilder = InsightInputBuilder()
     private var cachedMealsByDayKey: [String: [MealRecord]] = [:]
     private var cachedIngredients: [IngredientRecord]?
+    private var cachedTodaySoFarByDayKey: [String: CachedTodaySoFar] = [:]
+    private var todaySoFarTasksByDayKey: [String: Task<Void, Never>] = [:]
+    private var inFlightTodaySoFarSignatures: [String: String] = [:]
+    private var visibleTodaySoFarDayKey: String?
 
     var meals: [MealRecord] = []
     var ingredients: [IngredientRecord] = []
+    var isTodaySoFarEnabled: Bool = true
+    var isTodaySoFarCollapsed: Bool = false
+    var todaySoFarMessage: String?
+    var todaySoFarProviderLabel: String?
+    var todaySoFarErrorMessage: String?
+    var isLoadingTodaySoFar: Bool = false
     var draft: MealDraft?
     var entryMode: MealEntryMode = .manual
     var editingMealId: UUID?
@@ -43,12 +57,16 @@ final class MealsStore {
     init(
         mealRepository: MealRepository,
         ingredientRepository: IngredientRepository,
+        todaySoFarRepository: TodaySoFarRepository,
+        settingsRepository: SettingsRepository,
         aiIntegrationRepository: AIIntegrationRepository,
         context: ModelContext,
         deviceId: String
     ) {
         self.mealRepository = mealRepository
         self.ingredientRepository = ingredientRepository
+        self.todaySoFarRepository = todaySoFarRepository
+        self.settingsRepository = settingsRepository
         self.aiIntegrationRepository = aiIntegrationRepository
         self.context = context
         self.deviceId = deviceId
@@ -73,8 +91,64 @@ final class MealsStore {
             }
             errorMessage = nil
         } catch {
-            errorMessage = "Failed to load meals."
+            setAlertError("Failed to load meals.", operation: "Load meals", error: error)
         }
+    }
+
+    func reload(for dayKey: String) {
+        cachedMealsByDayKey.removeAll()
+        cachedIngredients = nil
+        load(for: dayKey)
+    }
+
+    func loadPreferences() {
+        do {
+            let settings = try settingsRepository.fetchSettings()
+            let isEnabled = settings?.showsTodaySoFarBanner ?? true
+            applyTodaySoFarPreference(isEnabled)
+        } catch {
+            applyTodaySoFarPreference(true)
+        }
+    }
+
+    func loadTodaySoFar(for dayKey: String, force: Bool = false) {
+        visibleTodaySoFarDayKey = dayKey
+        loadPreferences()
+
+        guard isTodaySoFarEnabled else {
+            clearVisibleTodaySoFar()
+            return
+        }
+
+        let mealsForDay: [MealRecord]
+        if let cachedMeals = cachedMealsByDayKey[dayKey] {
+            mealsForDay = cachedMeals
+        } else {
+            do {
+                let loadedMeals = try mealRepository.fetchMeals(localDayKey: dayKey)
+                cachedMealsByDayKey[dayKey] = loadedMeals
+                mealsForDay = loadedMeals
+            } catch {
+                clearTodaySoFar(for: dayKey)
+                return
+            }
+        }
+
+        showStoredTodaySoFarIfAvailable(for: dayKey, meals: mealsForDay)
+        refreshStoredTodaySoFarIfNeeded(for: dayKey, meals: mealsForDay, force: force)
+    }
+
+    func refresh(for dayKey: String, around date: Date) async {
+        reload(for: dayKey)
+        preloadAdjacentDays(around: date)
+        loadTodaySoFar(for: dayKey, force: true)
+        if let task = todaySoFarTasksByDayKey[dayKey] {
+            await task.value
+        }
+    }
+
+    func toggleTodaySoFarCollapsed() {
+        isTodaySoFarCollapsed.toggle()
     }
 
     func preloadAdjacentDays(around date: Date) {
@@ -211,6 +285,11 @@ final class MealsStore {
                 fatPerUnitG: ingredient.fatPerUnit
             )
         }
+        let aiLogInput = makeAILogInput(
+            mealName: aiLogMealName.trimmingCharacters(in: .whitespacesAndNewlines),
+            description: trimmedDescription,
+            availableIngredients: availableIngredients
+        )
 
         do {
             let integration = try? aiIntegrationRepository.fetchIntegration()
@@ -228,8 +307,6 @@ final class MealsStore {
             )
 
             aiLogOutput = result.rawText
-            aiLogPhase = .success
-            shouldPresentEditorAfterAILog = true
             entryMode = .ingredients
 
             let (lines, issues) = resolveMatchedIngredientsAI(result.payload.matchedIngredients)
@@ -258,7 +335,8 @@ final class MealsStore {
                 stagedIngredients: staged,
                 importIssues: issues
             )
-            await Task.yield()
+            aiLogPhase = .success
+            shouldPresentEditorAfterAILog = true
             dismissAILogStatus()
         } catch {
             if let localized = error as? LocalizedError, let description = localized.errorDescription {
@@ -267,6 +345,16 @@ final class MealsStore {
                 aiLogError = "Failed to log meal. \(error)"
             }
             aiLogPhase = .failure
+            ErrorReportService.capture(
+                key: ErrorReportKey.mealsAILog,
+                feature: "Meals",
+                operation: "AI meal logging",
+                userMessage: aiLogError ?? "AI meal logging failed.",
+                error: error,
+                llmInput: aiLogInput,
+                llmOutput: aiLogOutput,
+                llmProvider: aiLogProviderLabel
+            )
         }
     }
 
@@ -284,7 +372,7 @@ final class MealsStore {
     func importFromJSONText() {
         let trimmed = importJSONText.trimmingCharacters(in: .whitespacesAndNewlines)
         guard let data = trimmed.data(using: .utf8), !trimmed.isEmpty else {
-            errorMessage = "Paste valid JSON to import."
+            setAlertError("Paste valid JSON to import.", operation: "Import meal JSON text")
             return
         }
         importFromData(data)
@@ -323,7 +411,7 @@ final class MealsStore {
             isPresentingImportSheet = false
             isPresentingEditor = true
         } catch {
-            errorMessage = "Failed to parse meal JSON."
+            setAlertError("Failed to parse meal JSON.", operation: "Parse meal JSON import", error: error)
         }
     }
 
@@ -348,6 +436,10 @@ final class MealsStore {
 
     func saveDraft() {
         guard var draft else { return }
+        let hadStagedIngredients = !draft.stagedIngredients.isEmpty
+        let previousDayKey = editingMealId.flatMap { editingId in
+            meals.first(where: { $0.id == editingId })?.localDayKey
+        }
         let trimmedName = draft.name.trimmingCharacters(in: .whitespacesAndNewlines)
         fieldErrors = [:]
         guard !trimmedName.isEmpty else {
@@ -403,8 +495,13 @@ final class MealsStore {
             cachedMealsByDayKey.removeAll()
             load(for: draft.localDayKey)
             cancelEdit()
+            AppDataChangeNotifier.post(.meals)
+            if hadStagedIngredients {
+                AppDataChangeNotifier.post(.ingredients)
+            }
+            refreshStoredTodaySoFarForAffectedDays(previousDayKey: previousDayKey, newDayKey: draft.localDayKey)
         } catch {
-            draftError = "Failed to save meal."
+            setDraftError("Failed to save meal.", operation: "Save meal draft", error: error)
         }
     }
 
@@ -427,9 +524,234 @@ final class MealsStore {
             try mealRepository.softDelete(meal)
             cachedMealsByDayKey.removeAll()
             load(for: meal.localDayKey)
+            AppDataChangeNotifier.post(.meals)
+            refreshStoredTodaySoFarForAffectedDays(previousDayKey: meal.localDayKey)
         } catch {
-            errorMessage = "Failed to delete meal."
+            setAlertError("Failed to delete meal.", operation: "Delete meal", error: error)
         }
+    }
+
+    private func refreshStoredTodaySoFarForAffectedDays(previousDayKey: String?, newDayKey: String? = nil) {
+        let affectedDayKeys = Set([previousDayKey, newDayKey].compactMap { $0 })
+        guard !affectedDayKeys.isEmpty else { return }
+
+        for dayKey in affectedDayKeys {
+            let mealsForDay: [MealRecord]
+            if dayKey == visibleTodaySoFarDayKey {
+                mealsForDay = meals
+            } else if let cachedMeals = cachedMealsByDayKey[dayKey] {
+                mealsForDay = cachedMeals
+            } else if let loadedMeals = try? mealRepository.fetchMeals(localDayKey: dayKey) {
+                cachedMealsByDayKey[dayKey] = loadedMeals
+                mealsForDay = loadedMeals
+            } else {
+                continue
+            }
+
+            refreshStoredTodaySoFarIfNeeded(for: dayKey, meals: mealsForDay, force: true)
+        }
+    }
+
+    private func refreshStoredTodaySoFarIfNeeded(for dayKey: String, meals: [MealRecord], force: Bool) {
+        guard isTodaySoFarEnabled else { return }
+        let signature = todaySoFarSignature(for: meals)
+        let cached = cachedTodaySoFar(for: dayKey)
+
+        if let cached, cached.mealSignature == signature, !force {
+            if visibleTodaySoFarDayKey == dayKey {
+                apply(cached, for: dayKey)
+            }
+            return
+        }
+
+        if meals.isEmpty {
+            clearPersistedTodaySoFar(for: dayKey)
+            return
+        }
+
+        if !force, inFlightTodaySoFarSignatures[dayKey] == signature {
+            if visibleTodaySoFarDayKey == dayKey {
+                isLoadingTodaySoFar = true
+            }
+            return
+        }
+
+        scheduleTodaySoFarRefresh(for: dayKey, meals: meals, signature: signature)
+    }
+
+    private func scheduleTodaySoFarRefresh(for dayKey: String, meals: [MealRecord], signature: String) {
+        todaySoFarTasksByDayKey[dayKey]?.cancel()
+        inFlightTodaySoFarSignatures[dayKey] = signature
+
+        if visibleTodaySoFarDayKey == dayKey {
+            isLoadingTodaySoFar = true
+            todaySoFarErrorMessage = nil
+        }
+
+        todaySoFarTasksByDayKey[dayKey] = Task { @MainActor [weak self] in
+            guard let self else { return }
+            var inputLog = ""
+            defer {
+                self.todaySoFarTasksByDayKey[dayKey] = nil
+                self.inFlightTodaySoFarSignatures[dayKey] = nil
+                if self.visibleTodaySoFarDayKey == dayKey {
+                    self.isLoadingTodaySoFar = false
+                }
+            }
+
+            do {
+                let goals = try self.insightInputBuilder.fetchGoals(settingsRepository: self.settingsRepository)
+                let profile = try self.insightInputBuilder.fetchProfile(settingsRepository: self.settingsRepository)
+                let input = self.insightInputBuilder.makeInput(
+                    targetDay: dayKey,
+                    sourceDay: dayKey,
+                    meals: meals,
+                    goals: goals,
+                    profile: profile
+                )
+                inputLog = self.makeTodaySoFarInputLog(input: input)
+                let integration = try self.aiIntegrationRepository.fetchIntegration()
+                let result = try await self.insightsService.generateTodaySoFarMessage(
+                    input: input,
+                    integration: integration
+                )
+
+                let existing = try self.todaySoFarRepository.fetchTodaySoFar(localDayKey: dayKey)
+                if let existing {
+                    existing.mealSignature = signature
+                    existing.content = result.content
+                    existing.providerLabel = result.providerLabel
+                    existing.deletedAt = nil
+                    existing.touch(updatedBy: self.deviceId)
+                    try self.todaySoFarRepository.save()
+                } else {
+                    let record = TodaySoFarRecord(
+                        id: "today-so-far-\(dayKey)",
+                        localDayKey: dayKey,
+                        mealSignature: signature,
+                        content: result.content,
+                        providerLabel: result.providerLabel,
+                        lastModifiedByDeviceId: self.deviceId
+                    )
+                    try self.todaySoFarRepository.insert(record)
+                }
+
+                let cached = CachedTodaySoFar(
+                    content: result.content,
+                    providerLabel: result.providerLabel,
+                    mealSignature: signature
+                )
+                self.cachedTodaySoFarByDayKey[dayKey] = cached
+
+                if self.visibleTodaySoFarDayKey == dayKey {
+                    self.apply(cached, for: dayKey)
+                }
+            } catch is CancellationError {
+            } catch let error as URLError where error.code == .cancelled {
+            } catch {
+                if self.visibleTodaySoFarDayKey == dayKey {
+                    self.todaySoFarErrorMessage = self.todaySoFarDescription(for: error)
+                }
+                ErrorReportService.capture(
+                    key: ErrorReportKey.mealsTodaySoFar,
+                    feature: "Meals",
+                    operation: "Generate day summary message",
+                    userMessage: self.todaySoFarErrorMessage ?? "Day summary generation failed.",
+                    error: error,
+                    llmInput: inputLog,
+                    llmOutput: self.todaySoFarMessage,
+                    llmProvider: self.todaySoFarProviderLabel
+                )
+            }
+        }
+    }
+
+    private func showStoredTodaySoFarIfAvailable(for dayKey: String, meals: [MealRecord]) {
+        let signature = todaySoFarSignature(for: meals)
+        if let cached = cachedTodaySoFar(for: dayKey), cached.mealSignature == signature {
+            apply(cached, for: dayKey)
+            return
+        }
+
+        clearTodaySoFar(for: dayKey)
+    }
+
+    private func cachedTodaySoFar(for dayKey: String) -> CachedTodaySoFar? {
+        if let cached = cachedTodaySoFarByDayKey[dayKey] {
+            return cached
+        }
+
+        guard let existing = try? todaySoFarRepository.fetchTodaySoFar(localDayKey: dayKey) else {
+            return nil
+        }
+
+        let cached = CachedTodaySoFar(
+            content: existing.content,
+            providerLabel: existing.providerLabel,
+            mealSignature: existing.mealSignature
+        )
+        cachedTodaySoFarByDayKey[dayKey] = cached
+        return cached
+    }
+
+    private func clearPersistedTodaySoFar(for dayKey: String) {
+        cachedTodaySoFarByDayKey.removeValue(forKey: dayKey)
+        todaySoFarTasksByDayKey[dayKey]?.cancel()
+        todaySoFarTasksByDayKey[dayKey] = nil
+        inFlightTodaySoFarSignatures[dayKey] = nil
+
+        if let existing = try? todaySoFarRepository.fetchTodaySoFar(localDayKey: dayKey) {
+            try? todaySoFarRepository.softDelete(existing)
+        }
+
+        if visibleTodaySoFarDayKey == dayKey {
+            clearTodaySoFar(for: dayKey)
+        }
+    }
+
+    private func applyTodaySoFarPreference(_ isEnabled: Bool) {
+        isTodaySoFarEnabled = isEnabled
+
+        guard !isEnabled else { return }
+
+        todaySoFarTasksByDayKey.values.forEach { $0.cancel() }
+        todaySoFarTasksByDayKey.removeAll()
+        inFlightTodaySoFarSignatures.removeAll()
+        clearVisibleTodaySoFar()
+    }
+
+    private func apply(_ cached: CachedTodaySoFar, for dayKey: String) {
+        guard visibleTodaySoFarDayKey == dayKey else { return }
+        todaySoFarMessage = cached.content
+        todaySoFarProviderLabel = cached.providerLabel
+        todaySoFarErrorMessage = nil
+    }
+
+    private func clearVisibleTodaySoFar() {
+        todaySoFarMessage = nil
+        todaySoFarProviderLabel = nil
+        todaySoFarErrorMessage = nil
+        isLoadingTodaySoFar = false
+    }
+
+    private func clearTodaySoFar(for dayKey: String) {
+        guard visibleTodaySoFarDayKey == dayKey else { return }
+        clearVisibleTodaySoFar()
+    }
+
+    private func todaySoFarDescription(for error: Error) -> String {
+        if let localized = error as? LocalizedError, let description = localized.errorDescription {
+            return description
+        }
+
+        return "Failed to refresh the day summary. \(error)"
+    }
+
+    private func todaySoFarSignature(for meals: [MealRecord]) -> String {
+        meals.map {
+            "\($0.id.uuidString)|\($0.updatedAt.timeIntervalSince1970)|\($0.localDayKey)"
+        }
+        .joined(separator: ";")
     }
 
     private func upsertMeal(with draft: MealDraft, snapshots: [MealIngredientSnapshotRecord]) throws {
@@ -598,10 +920,67 @@ final class MealsStore {
         return dates
     }
 
+    private func setAlertError(_ message: String, operation: String, error: Error? = nil) {
+        errorMessage = message
+        ErrorReportService.capture(
+            key: ErrorReportKey.mealsAlert,
+            feature: "Meals",
+            operation: operation,
+            userMessage: message,
+            error: error
+        )
+    }
+
+    private func setDraftError(_ message: String, operation: String, error: Error? = nil) {
+        draftError = message
+        ErrorReportService.capture(
+            key: ErrorReportKey.mealsDraft,
+            feature: "Meals",
+            operation: operation,
+            userMessage: message,
+            error: error
+        )
+    }
+
+    private func makeAILogInput(
+        mealName: String,
+        description: String,
+        availableIngredients: [AvailableIngredient]
+    ) -> String {
+        let encoder = JSONEncoder()
+        encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
+        let input = MealAILogInput(
+            mealName: mealName.isEmpty ? nil : mealName,
+            mealDescription: description,
+            availableIngredientsList: availableIngredients
+        )
+        guard let data = try? encoder.encode(input),
+              let text = String(data: data, encoding: .utf8) else {
+            return "Failed to encode AI meal log input payload."
+        }
+        return text
+    }
+
+    private func makeTodaySoFarInputLog(input: InsightGenerationInput) -> String {
+        let encoder = JSONEncoder()
+        encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
+        guard let data = try? encoder.encode(input),
+              let text = String(data: data, encoding: .utf8) else {
+            return "Failed to encode day summary AI input payload."
+        }
+        return text
+    }
+
     enum AILogPhase {
         case idle
         case processing
         case success
         case failure
     }
+}
+
+private struct CachedTodaySoFar {
+    let content: String
+    let providerLabel: String
+    let mealSignature: String
 }

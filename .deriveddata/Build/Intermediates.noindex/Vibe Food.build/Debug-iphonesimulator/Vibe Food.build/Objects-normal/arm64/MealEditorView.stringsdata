@@ -1,0 +1,312 @@
+{
+  "source": "/Users/roziscoding/github.com/roziscoding/vibe-food-native/Vibe Food/Vibe Food/Features/Meals/MealEditorView.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "Meal",
+        "location": {
+          "startingColumn": 38,
+          "startingLine": 145
+        }
+      },
+      {
+        "comment": "",
+        "key": "Basics",
+        "location": {
+          "startingColumn": 29,
+          "startingLine": 37
+        }
+      },
+      {
+        "comment": "",
+        "key": "Import Issues",
+        "location": {
+          "startingColumn": 33,
+          "startingLine": 50
+        }
+      },
+      {
+        "comment": "",
+        "key": "New Ingredients",
+        "location": {
+          "startingColumn": 33,
+          "startingLine": 70
+        }
+      },
+      {
+        "comment": "",
+        "key": "Entry Mode",
+        "location": {
+          "startingColumn": 29,
+          "startingLine": 129
+        }
+      },
+      {
+        "comment": "",
+        "key": "Report",
+        "location": {
+          "startingColumn": 40,
+          "startingLine": 21
+        }
+      },
+      {
+        "comment": "",
+        "key": "Meal Name",
+        "location": {
+          "startingColumn": 35,
+          "startingLine": 38
+        }
+      },
+      {
+        "comment": "",
+        "key": "Date & Time",
+        "location": {
+          "startingColumn": 36,
+          "startingLine": 40
+        }
+      },
+      {
+        "comment": "",
+        "key": "Ingredient",
+        "location": {
+          "startingColumn": 44,
+          "startingLine": 57
+        }
+      },
+      {
+        "comment": "",
+        "key": "Select",
+        "location": {
+          "startingColumn": 46,
+          "startingLine": 58
+        }
+      },
+      {
+        "comment": "",
+        "key": "Name",
+        "location": {
+          "startingColumn": 47,
+          "startingLine": 73
+        }
+      },
+      {
+        "comment": "",
+        "key": "Unit",
+        "location": {
+          "startingColumn": 46,
+          "startingLine": 75
+        }
+      },
+      {
+        "comment": "",
+        "key": "",
+        "location": {
+          "startingColumn": 51,
+          "startingLine": 77
+        }
+      },
+      {
+        "comment": "",
+        "key": "Portion Size",
+        "location": {
+          "startingColumn": 46,
+          "startingLine": 84
+        }
+      },
+      {
+        "comment": "",
+        "key": "",
+        "location": {
+          "startingColumn": 51,
+          "startingLine": 86
+        }
+      },
+      {
+        "comment": "",
+        "key": "Calories",
+        "location": {
+          "startingColumn": 46,
+          "startingLine": 92
+        }
+      },
+      {
+        "comment": "",
+        "key": "",
+        "location": {
+          "startingColumn": 51,
+          "startingLine": 94
+        }
+      },
+      {
+        "comment": "",
+        "key": "Protein",
+        "location": {
+          "startingColumn": 46,
+          "startingLine": 100
+        }
+      },
+      {
+        "comment": "",
+        "key": "",
+        "location": {
+          "startingColumn": 51,
+          "startingLine": 102
+        }
+      },
+      {
+        "comment": "",
+        "key": "Carbs",
+        "location": {
+          "startingColumn": 46,
+          "startingLine": 108
+        }
+      },
+      {
+        "comment": "",
+        "key": "",
+        "location": {
+          "startingColumn": 51,
+          "startingLine": 110
+        }
+      },
+      {
+        "comment": "",
+        "key": "Fat",
+        "location": {
+          "startingColumn": 46,
+          "startingLine": 116
+        }
+      },
+      {
+        "comment": "",
+        "key": "",
+        "location": {
+          "startingColumn": 51,
+          "startingLine": 118
+        }
+      },
+      {
+        "comment": "",
+        "key": "Mode",
+        "location": {
+          "startingColumn": 32,
+          "startingLine": 130
+        }
+      },
+      {
+        "comment": "",
+        "key": "Manual",
+        "location": {
+          "startingColumn": 34,
+          "startingLine": 131
+        }
+      },
+      {
+        "comment": "",
+        "key": "Ingredients",
+        "location": {
+          "startingColumn": 34,
+          "startingLine": 132
+        }
+      },
+      {
+        "comment": "",
+        "key": "Macros",
+        "location": {
+          "startingColumn": 17,
+          "startingLine": 165
+        }
+      },
+      {
+        "comment": "",
+        "key": "Cancel",
+        "location": {
+          "startingColumn": 36,
+          "startingLine": 149
+        }
+      },
+      {
+        "comment": "",
+        "key": "Save",
+        "location": {
+          "startingColumn": 36,
+          "startingLine": 152
+        }
+      },
+      {
+        "comment": "",
+        "key": "Ingredients",
+        "location": {
+          "startingColumn": 21,
+          "startingLine": 176
+        }
+      },
+      {
+        "comment": "",
+        "key": "Totals",
+        "location": {
+          "startingColumn": 21,
+          "startingLine": 222
+        }
+      },
+      {
+        "comment": "",
+        "key": "Add Ingredient",
+        "location": {
+          "startingColumn": 24,
+          "startingLine": 217
+        }
+      },
+      {
+        "comment": "",
+        "key": "Select an ingredient for this line.",
+        "location": {
+          "startingColumn": 34,
+          "startingLine": 204
+        }
+      },
+      {
+        "comment": "",
+        "key": "Ingredient",
+        "location": {
+          "startingColumn": 32,
+          "startingLine": 179
+        }
+      },
+      {
+        "comment": "",
+        "key": "Select ingredient",
+        "location": {
+          "startingColumn": 34,
+          "startingLine": 186
+        }
+      },
+      {
+        "comment": "",
+        "key": "Amount",
+        "location": {
+          "startingColumn": 34,
+          "startingLine": 193
+        }
+      },
+      {
+        "comment": "",
+        "key": "",
+        "location": {
+          "startingColumn": 39,
+          "startingLine": 195
+        }
+      },
+      {
+        "comment": "",
+        "key": "",
+        "location": {
+          "startingColumn": 23,
+          "startingLine": 240
+        }
+      }
+    ]
+  },
+  "version": 1
+}

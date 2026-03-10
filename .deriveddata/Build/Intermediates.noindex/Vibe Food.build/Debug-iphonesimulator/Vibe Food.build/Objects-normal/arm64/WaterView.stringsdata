@@ -1,0 +1,128 @@
+{
+  "source": "/Users/roziscoding/github.com/roziscoding/vibe-food-native/Vibe Food/Vibe Food/Features/Water/WaterView.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "Error",
+        "location": {
+          "startingColumn": 20,
+          "startingLine": 112
+        }
+      },
+      {
+        "comment": "",
+        "key": "Delete Entry",
+        "location": {
+          "startingColumn": 20,
+          "startingLine": 133
+        }
+      },
+      {
+        "comment": "",
+        "key": "Log your first glass for this day.",
+        "location": {
+          "startingColumn": 51,
+          "startingLine": 57
+        }
+      },
+      {
+        "comment": "",
+        "key": "No water entries",
+        "location": {
+          "startingColumn": 33,
+          "startingLine": 55
+        }
+      },
+      {
+        "comment": "",
+        "key": "Delete",
+        "location": {
+          "startingColumn": 51,
+          "startingLine": 75
+        }
+      },
+      {
+        "comment": "",
+        "key": "Report",
+        "location": {
+          "startingColumn": 24,
+          "startingLine": 116
+        }
+      },
+      {
+        "comment": "",
+        "key": "OK",
+        "location": {
+          "startingColumn": 24,
+          "startingLine": 126
+        }
+      },
+      {
+        "comment": "",
+        "key": "Delete",
+        "location": {
+          "startingColumn": 24,
+          "startingLine": 137
+        }
+      },
+      {
+        "comment": "",
+        "key": "Cancel",
+        "location": {
+          "startingColumn": 24,
+          "startingLine": 140
+        }
+      },
+      {
+        "comment": "",
+        "key": "This water entry will be removed from your history.",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 144
+        }
+      },
+      {
+        "comment": "",
+        "key": "Today",
+        "location": {
+          "startingColumn": 18,
+          "startingLine": 176
+        }
+      },
+      {
+        "comment": "",
+        "key": "Custom ml",
+        "location": {
+          "startingColumn": 27,
+          "startingLine": 212
+        }
+      },
+      {
+        "comment": "",
+        "key": "Add",
+        "location": {
+          "startingColumn": 24,
+          "startingLine": 222
+        }
+      },
+      {
+        "comment": "",
+        "key": "+%lld ml",
+        "location": {
+          "startingColumn": 18,
+          "startingLine": 240
+        }
+      },
+      {
+        "comment": "",
+        "key": "%@ ml",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 266
+        }
+      }
+    ]
+  },
+  "version": 1
+}

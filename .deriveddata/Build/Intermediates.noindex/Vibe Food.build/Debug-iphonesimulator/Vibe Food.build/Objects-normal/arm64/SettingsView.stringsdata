@@ -1,0 +1,288 @@
+{
+  "source": "/Users/roziscoding/github.com/roziscoding/vibe-food-native/Vibe Food/Vibe Food/Features/Settings/SettingsView.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "Confirm Reset",
+        "location": {
+          "startingColumn": 16,
+          "startingLine": 158
+        }
+      },
+      {
+        "comment": "",
+        "key": "Error",
+        "location": {
+          "startingColumn": 16,
+          "startingLine": 83
+        }
+      },
+      {
+        "comment": "",
+        "key": "Reset Data",
+        "location": {
+          "startingColumn": 16,
+          "startingLine": 101
+        }
+      },
+      {
+        "comment": "",
+        "key": "Report",
+        "location": {
+          "startingColumn": 20,
+          "startingLine": 87
+        }
+      },
+      {
+        "comment": "",
+        "key": "OK",
+        "location": {
+          "startingColumn": 20,
+          "startingLine": 97
+        }
+      },
+      {
+        "comment": "",
+        "key": "Continue",
+        "location": {
+          "startingColumn": 20,
+          "startingLine": 102
+        }
+      },
+      {
+        "comment": "",
+        "key": "Cancel",
+        "location": {
+          "startingColumn": 20,
+          "startingLine": 105
+        }
+      },
+      {
+        "comment": "",
+        "key": "This will delete meals, ingredients, insights, and settings on this device.",
+        "location": {
+          "startingColumn": 18,
+          "startingLine": 107
+        }
+      },
+      {
+        "comment": "",
+        "key": "Reset",
+        "location": {
+          "startingColumn": 20,
+          "startingLine": 159
+        }
+      },
+      {
+        "comment": "",
+        "key": "Cancel",
+        "location": {
+          "startingColumn": 20,
+          "startingLine": 174
+        }
+      },
+      {
+        "comment": "",
+        "key": "This cannot be undone.",
+        "location": {
+          "startingColumn": 18,
+          "startingLine": 176
+        }
+      },
+      {
+        "comment": "",
+        "key": "Recommendation Helper",
+        "location": {
+          "startingColumn": 20,
+          "startingLine": 221
+        }
+      },
+      {
+        "comment": "",
+        "key": "Edit Profile",
+        "location": {
+          "startingColumn": 24,
+          "startingLine": 241
+        }
+      },
+      {
+        "comment": "",
+        "key": "Used by Input and Water tabs.",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 265
+        }
+      },
+      {
+        "comment": "",
+        "key": "Enable Insights",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 287
+        }
+      },
+      {
+        "comment": "",
+        "key": "Show or hide insights guidance in the app without affecting your meals, ingredients, or goals.",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 290
+        }
+      },
+      {
+        "comment": "",
+        "key": "Show day summary banner",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 303
+        }
+      },
+      {
+        "comment": "",
+        "key": "Show or hide the collapsible Today so far card on the Meals tab.",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 306
+        }
+      },
+      {
+        "comment": "",
+        "key": "Provider",
+        "location": {
+          "startingColumn": 28,
+          "startingLine": 320
+        }
+      },
+      {
+        "comment": "",
+        "key": "Key: %@",
+        "location": {
+          "startingColumn": 34,
+          "startingLine": 398
+        }
+      },
+      {
+        "comment": "",
+        "key": "API Key",
+        "location": {
+          "startingColumn": 37,
+          "startingLine": 333
+        }
+      },
+      {
+        "comment": "",
+        "key": "Checking...",
+        "location": {
+          "startingColumn": 64,
+          "startingLine": 352
+        }
+      },
+      {
+        "comment": "",
+        "key": "Confirm",
+        "location": {
+          "startingColumn": 80,
+          "startingLine": 352
+        }
+      },
+      {
+        "comment": "",
+        "key": "Report",
+        "location": {
+          "startingColumn": 40,
+          "startingLine": 368
+        }
+      },
+      {
+        "comment": "",
+        "key": "Validating key...",
+        "location": {
+          "startingColumn": 38,
+          "startingLine": 387
+        }
+      },
+      {
+        "comment": "",
+        "key": "Change Key",
+        "location": {
+          "startingColumn": 36,
+          "startingLine": 406
+        }
+      },
+      {
+        "comment": "",
+        "key": "Clear Key",
+        "location": {
+          "startingColumn": 36,
+          "startingLine": 412
+        }
+      },
+      {
+        "comment": "",
+        "key": "Report",
+        "location": {
+          "startingColumn": 40,
+          "startingLine": 424
+        }
+      },
+      {
+        "comment": "",
+        "key": "Export Data (No Insights)",
+        "location": {
+          "startingColumn": 20,
+          "startingLine": 451
+        }
+      },
+      {
+        "comment": "",
+        "key": "Import Data (No Insights)",
+        "location": {
+          "startingColumn": 20,
+          "startingLine": 459
+        }
+      },
+      {
+        "comment": "",
+        "key": "Reset All Data",
+        "location": {
+          "startingColumn": 20,
+          "startingLine": 467
+        }
+      },
+      {
+        "comment": "",
+        "key": "",
+        "location": {
+          "startingColumn": 23,
+          "startingLine": 534
+        }
+      },
+      {
+        "comment": "",
+        "key": "Button %@",
+        "location": {
+          "startingColumn": 18,
+          "startingLine": 547
+        }
+      },
+      {
+        "comment": "",
+        "key": "ml",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 558
+        }
+      },
+      {
+        "comment": "",
+        "key": "",
+        "location": {
+          "startingColumn": 27,
+          "startingLine": 553
+        }
+      }
+    ]
+  },
+  "version": 1
+}

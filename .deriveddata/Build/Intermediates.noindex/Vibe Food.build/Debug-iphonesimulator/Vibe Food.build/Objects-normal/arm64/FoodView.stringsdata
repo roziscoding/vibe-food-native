@@ -1,0 +1,48 @@
+{
+  "source": "/Users/roziscoding/github.com/roziscoding/vibe-food-native/Vibe Food/Vibe Food/Features/Food/FoodView.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "Error",
+        "location": {
+          "startingColumn": 20,
+          "startingLine": 63
+        }
+      },
+      {
+        "comment": "",
+        "key": "Report",
+        "location": {
+          "startingColumn": 24,
+          "startingLine": 67
+        }
+      },
+      {
+        "comment": "",
+        "key": "OK",
+        "location": {
+          "startingColumn": 24,
+          "startingLine": 77
+        }
+      },
+      {
+        "comment": "",
+        "key": "Open full meals history, add meals, and use Today so far guidance.",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 116
+        }
+      },
+      {
+        "comment": "",
+        "key": "Open your ingredients library to add, edit, or scan labels.",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 147
+        }
+      }
+    ]
+  },
+  "version": 1
+}

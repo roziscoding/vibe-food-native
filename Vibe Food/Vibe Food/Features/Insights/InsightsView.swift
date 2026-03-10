@@ -1,14 +1,24 @@
 import SwiftUI
 
+enum InsightsPresentation {
+    case tab
+    case embedded
+}
+
 struct InsightsView: View {
     @EnvironmentObject private var appContainer: AppContainer
     @Environment(DaySelectionStore.self) private var dayStore
     @State private var store: InsightsStore?
+    let presentation: InsightsPresentation
+
+    init(presentation: InsightsPresentation = .tab) {
+        self.presentation = presentation
+    }
 
     var body: some View {
         Group {
             if let store {
-                InsightsContentView(store: store)
+                InsightsContentView(store: store, presentation: presentation)
             } else {
                 ProgressView()
                     .task {
@@ -30,99 +40,111 @@ struct InsightsView: View {
 }
 
 private struct InsightsContentView: View {
+    @Environment(\.dismiss) private var dismiss
     @Environment(DaySelectionStore.self) private var dayStore
     @Bindable var store: InsightsStore
+    let presentation: InsightsPresentation
     @State private var showDatePicker: Bool = false
     @State private var tempDate: Date = Date()
+    @State private var errorReportPayload: ExportPayload?
 
     var body: some View {
-        NavigationStack {
-            ZStack {
-                AppGlassBackground()
-
-                VStack(alignment: .leading, spacing: AppGlass.cardSpacing) {
-                    header
-
-                    ScrollView {
-                        VStack(alignment: .leading, spacing: AppGlass.cardSpacing) {
-                            if store.showsOnboarding {
-                                onboardingCard
-                            } else if store.isLoading && !store.isRefreshing {
-                                statusCard(
-                                    title: "Analyzing yesterday",
-                                    message: "Building a fresh set of insights for today from your latest meals, goals, and body data.",
-                                    showsProgress: true
-                                )
-                            } else if let errorMessage = store.errorMessage {
-                                statusCard(
-                                    title: "Insights unavailable",
-                                    message: errorMessage,
-                                    showsProgress: false
-                                )
-                            } else if let insightText = store.insightText, !insightText.isEmpty {
-                                insightCard(insightText: insightText)
-                            } else {
-                                emptyState
-                            }
-                        }
-                        .padding(.bottom, 120)
-                    }
-                    .scrollDisabled(dayStore.isScrollLockedForDaySwipe)
-                    .onScrollPhaseChange { _, newPhase in
-                        dayStore.setVerticalScrollActive(newPhase.isScrolling)
-                    }
-                    .offset(x: dayStore.horizontalDragOffset)
-                    .contentShape(Rectangle())
-                    .simultaneousGesture(daySwipeGesture)
-                    .scrollIndicators(.hidden)
-                }
-                .padding(.horizontal, 20)
-                .padding(.top, 20)
-            }
-            .sheet(isPresented: $showDatePicker) {
+        Group {
+            if presentation == .tab {
                 NavigationStack {
-                    VStack {
-                        DatePicker(
-                            "Date",
-                            selection: $tempDate,
-                            in: ...Date(),
-                            displayedComponents: [.date]
-                        )
-                        .datePickerStyle(.graphical)
-                        .labelsHidden()
-                    }
-                    .padding(.bottom, 8)
-                    .presentationDetents([.large])
-                    .presentationDragIndicator(.visible)
-                    .navigationTitle("Select Date")
-                    .toolbar {
-                        ToolbarItem(placement: .confirmationAction) {
-                            Button("Done") {
-                                dayStore.setSelectedDate(tempDate)
-                                showDatePicker = false
-                            }
+                    content
+                }
+            } else {
+                content
+            }
+        }
+        .sheet(isPresented: $showDatePicker) {
+            NavigationStack {
+                VStack {
+                    DatePicker(
+                        "Date",
+                        selection: $tempDate,
+                        in: ...Date(),
+                        displayedComponents: [.date]
+                    )
+                    .datePickerStyle(.graphical)
+                    .labelsHidden()
+                }
+                .padding(.bottom, 8)
+                .presentationDetents([.large])
+                .presentationDragIndicator(.visible)
+                .navigationTitle("Select Date")
+                .toolbar {
+                    ToolbarItem(placement: .confirmationAction) {
+                        Button("Done") {
+                            dayStore.setSelectedDate(tempDate)
+                            showDatePicker = false
                         }
                     }
                 }
             }
-            .refreshable {
-                guard !store.showsOnboarding else { return }
-                await store.loadOrGenerate(
-                    for: dayStore.selectedDate,
-                    targetDayKey: dayStore.localDayKey,
-                    forceRefresh: true
-                )
+        }
+        .refreshable {
+            guard !store.showsOnboarding else { return }
+            await store.loadOrGenerate(
+                for: dayStore.selectedDate,
+                targetDayKey: dayStore.localDayKey,
+                forceRefresh: true
+            )
+        }
+        .toolbar(.hidden, for: .navigationBar)
+        .toolbarBackground(.visible, for: .tabBar)
+        .toolbarBackground(.ultraThinMaterial, for: .tabBar)
+        .onChange(of: dayStore.localDayKey) { _, newValue in
+            store.showCachedInsightIfAvailable(for: newValue)
+        }
+        .task(id: dayStore.settledDayKey) {
+            guard !store.showsOnboarding else { return }
+            await store.loadOrGenerate(for: dayStore.selectedDate, targetDayKey: dayStore.settledDayKey)
+        }
+        .sheet(item: $errorReportPayload) { payload in
+            ShareSheet(items: [payload.url])
+        }
+    }
+
+    private var content: some View {
+        ZStack {
+            AppGlassBackground()
+
+            VStack(alignment: .leading, spacing: AppGlass.cardSpacing) {
+                header
+
+                ScrollView {
+                    VStack(alignment: .leading, spacing: AppGlass.cardSpacing) {
+                        if store.showsOnboarding {
+                            onboardingCard
+                        } else if store.isLoading && !store.isRefreshing {
+                            statusCard(
+                                title: "Analyzing yesterday",
+                                message: "Building a fresh set of insights for today from your latest meals, goals, and body data.",
+                                showsProgress: true
+                            )
+                        } else if let errorMessage = store.errorMessage {
+                            errorStatusCard(message: errorMessage)
+                        } else if let insightText = store.insightText, !insightText.isEmpty {
+                            insightCard(insightText: insightText)
+                        } else {
+                            emptyState
+                        }
+                    }
+                    .padding(.bottom, 120)
+                }
+                .scrollDisabled(dayStore.isScrollLockedForDaySwipe)
+                .onScrollPhaseChange { _, newPhase in
+                    dayStore.setVerticalScrollActive(newPhase.isScrolling)
+                }
+                .offset(x: dayStore.horizontalDragOffset)
+                .contentShape(Rectangle())
+                .simultaneousGesture(daySwipeGesture)
+                .scrollIndicators(.hidden)
             }
-            .toolbar(.hidden, for: .navigationBar)
-            .toolbarBackground(.visible, for: .tabBar)
-            .toolbarBackground(.ultraThinMaterial, for: .tabBar)
-            .onChange(of: dayStore.localDayKey) { _, newValue in
-                store.showCachedInsightIfAvailable(for: newValue)
-            }
-            .task(id: dayStore.settledDayKey) {
-                guard !store.showsOnboarding else { return }
-                await store.loadOrGenerate(for: dayStore.selectedDate, targetDayKey: dayStore.settledDayKey)
-            }
+            .padding(.horizontal, 20)
+            .padding(.top, 20)
         }
     }
 
@@ -149,6 +171,15 @@ private struct InsightsContentView: View {
 
     private var header: some View {
         VStack(spacing: 16) {
+            if presentation == .embedded {
+                HStack {
+                    circularGlassButton(systemImage: "chevron.left") {
+                        dismiss()
+                    }
+                    Spacer()
+                }
+            }
+
             Text("Insights")
                 .font(.system(size: 34, weight: .semibold, design: .rounded))
                 .foregroundStyle(AppGlass.textPrimary)
@@ -193,11 +224,11 @@ private struct InsightsContentView: View {
             }
 
             if let generatedLine {
-            Text(generatedLine)
-                .font(.system(size: 13, weight: .medium, design: .rounded))
-                .foregroundStyle(AppGlass.textSubtle)
-                .frame(maxWidth: .infinity, alignment: .center)
-        }
+                Text(generatedLine)
+                    .font(.system(size: 13, weight: .medium, design: .rounded))
+                    .foregroundStyle(AppGlass.textSubtle)
+                    .frame(maxWidth: .infinity, alignment: .center)
+            }
         }
     }
 
@@ -239,6 +270,38 @@ private struct InsightsContentView: View {
             Text(message)
                 .foregroundStyle(AppGlass.textMuted)
                 .appBodyText()
+        }
+        .padding(AppGlass.heroPadding)
+        .glassPanel(cornerRadius: AppGlass.cardCornerRadius, weight: .primary)
+    }
+
+    private func errorStatusCard(message: String) -> some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack(spacing: 10) {
+                Image(systemName: "exclamationmark.triangle.fill")
+                    .foregroundStyle(.yellow)
+
+                Text("Insights unavailable")
+                    .font(.system(size: 20, weight: .semibold, design: .rounded))
+                    .foregroundStyle(AppGlass.textPrimary)
+            }
+
+            Text(message)
+                .foregroundStyle(AppGlass.textMuted)
+                .appBodyText()
+
+            Button("Report") {
+                Task {
+                    errorReportPayload = try? await ErrorReportService.makePayload(
+                        key: ErrorReportKey.insightsStatus,
+                        fallbackFeature: "Insights",
+                        fallbackOperation: "Load insights",
+                        fallbackMessage: message
+                    )
+                }
+            }
+            .font(.system(size: 14, weight: .semibold, design: .rounded))
+            .foregroundStyle(AppGlass.accent)
         }
         .padding(AppGlass.heroPadding)
         .glassPanel(cornerRadius: AppGlass.cardCornerRadius, weight: .primary)

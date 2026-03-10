@@ -1,5 +1,100 @@
 import Foundation
 
+struct AppDataBackupPayload: Codable {
+    let schemaVersion: Int
+    let exportedAt: Date
+    let ingredients: [IngredientBackupRow]
+    let meals: [MealBackupRow]
+    let waterEntries: [WaterEntryBackupRow]?
+    let settings: SettingsBackupRow?
+    let aiIntegration: AIIntegrationBackupRow?
+}
+
+struct IngredientBackupRow: Codable {
+    let id: UUID
+    let name: String
+    let unit: String
+    let portionSize: Double
+    let caloriesPerPortion: Double
+    let proteinPerPortion: Double
+    let carbsPerPortion: Double
+    let fatPerPortion: Double
+    let caloriesPerUnit: Double
+    let proteinPerUnit: Double
+    let carbsPerUnit: Double
+    let fatPerUnit: Double
+    let createdAt: Date
+    let updatedAt: Date
+    let lastModifiedByDeviceId: String
+    let syncVersion: Int
+}
+
+struct MealBackupRow: Codable {
+    struct Snapshot: Codable {
+        let id: UUID
+        let sourceIngredientID: UUID?
+        let name: String
+        let amount: Double
+        let unit: String
+    }
+
+    let id: UUID
+    let name: String
+    let calories: Double
+    let protein: Double
+    let carbs: Double
+    let fat: Double
+    let consumedAt: Date
+    let timeZoneIdentifier: String
+    let localDayKey: String
+    let createdAt: Date
+    let updatedAt: Date
+    let lastModifiedByDeviceId: String
+    let syncVersion: Int
+    let ingredientSnapshots: [Snapshot]
+}
+
+struct WaterEntryBackupRow: Codable {
+    let id: UUID
+    let amountMl: Double
+    let consumedAt: Date
+    let timeZoneIdentifier: String
+    let localDayKey: String
+    let createdAt: Date
+    let updatedAt: Date
+    let lastModifiedByDeviceId: String
+    let syncVersion: Int
+}
+
+struct SettingsBackupRow: Codable {
+    let calorieGoal: Double
+    let proteinGoal: Double
+    let carbsGoal: Double
+    let fatGoal: Double
+    let waterGoal: Double?
+    let waterQuickAmountsCsv: String?
+    let showsInsights: Bool?
+    let showsTodaySoFarBanner: Bool?
+    let age: Int?
+    let heightCm: Double?
+    let weightKg: Double?
+    let sex: Sex?
+    let activityLevel: ActivityLevel?
+    let objective: GoalObjective?
+    let createdAt: Date
+    let updatedAt: Date
+    let lastModifiedByDeviceId: String
+    let syncVersion: Int
+}
+
+struct AIIntegrationBackupRow: Codable {
+    let provider: AIProvider
+    let apiKey: String
+    let updatedAt: Date
+    let lastModifiedByDeviceId: String
+    let syncVersion: Int
+}
+
 struct IngredientImportPayload: Codable {
     struct MacrosPerPortion: Codable {
         let proteinG: Double

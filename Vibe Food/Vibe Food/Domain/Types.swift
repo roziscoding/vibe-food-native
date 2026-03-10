@@ -168,6 +168,53 @@ enum Sex: String, Codable, CaseIterable, Identifiable {
     var id: String { rawValue }
 }
 
+struct WaterQuickAmountsConfig {
+    static let defaultValues: [Double] = [250, 500, 750]
+
+    static func parse(csv: String?) -> [Double] {
+        guard let csv,
+              !csv.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+            return defaultValues
+        }
+
+        let parsed = csv
+            .split(separator: ",")
+            .compactMap { part -> Double? in
+                let trimmed = part.trimmingCharacters(in: .whitespacesAndNewlines)
+                guard let value = Double(trimmed) else { return nil }
+                return value
+            }
+
+        return normalize(parsed)
+    }
+
+    static func serialize(_ values: [Double]) -> String {
+        normalize(values)
+            .map { String(Int($0.rounded())) }
+            .joined(separator: ",")
+    }
+
+    static func normalize(_ values: [Double]) -> [Double] {
+        var normalized: [Double] = []
+
+        for value in values.map({ $0.rounded() }) {
+            guard value > 0 else { continue }
+            if normalized.contains(where: { $0 == value }) { continue }
+            normalized.append(value)
+        }
+
+        if normalized.isEmpty {
+            normalized = defaultValues
+        }
+
+        while normalized.count < defaultValues.count {
+            normalized.append(defaultValues[normalized.count])
+        }
+
+        return Array(normalized.prefix(defaultValues.count))
+    }
+}
+
 struct GoalRecommendationInput: Equatable {
     var age: Int
     var heightCm: Double
@@ -179,4 +226,5 @@ struct GoalRecommendationInput: Equatable {
 
 struct GoalRecommendationOutput: Equatable {
     var targets: MacroTargets
+    var waterGoalMl: Double
 }

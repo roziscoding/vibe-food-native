@@ -1,0 +1,168 @@
+{
+  "source": "/Users/roziscoding/github.com/roziscoding/vibe-food-native/Vibe Food/Vibe Food/Features/Dashboard/DashboardView.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "Error",
+        "location": {
+          "startingColumn": 20,
+          "startingLine": 93
+        }
+      },
+      {
+        "comment": "",
+        "key": "Report",
+        "location": {
+          "startingColumn": 24,
+          "startingLine": 97
+        }
+      },
+      {
+        "comment": "",
+        "key": "OK",
+        "location": {
+          "startingColumn": 24,
+          "startingLine": 107
+        }
+      },
+      {
+        "comment": "",
+        "key": "No insight generated for this day yet. Open full insights to generate one.",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 170
+        }
+      },
+      {
+        "comment": "",
+        "key": "Generated with %@",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 166
+        }
+      },
+      {
+        "comment": "",
+        "key": "See Full Insights",
+        "location": {
+          "startingColumn": 34,
+          "startingLine": 181
+        }
+      },
+      {
+        "comment": "",
+        "key": "Insights are disabled",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 196
+        }
+      },
+      {
+        "comment": "",
+        "key": "Enable Insights in Settings to see AI guidance directly on your overview.",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 199
+        }
+      },
+      {
+        "comment": "",
+        "key": "Add a meal for this day.",
+        "location": {
+          "startingColumn": 97,
+          "startingLine": 215
+        }
+      },
+      {
+        "comment": "",
+        "key": "No meals",
+        "location": {
+          "startingColumn": 40,
+          "startingLine": 215
+        }
+      },
+      {
+        "comment": "",
+        "key": "%@ kcal",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 232
+        }
+      },
+      {
+        "comment": "",
+        "key": "%@ %@",
+        "location": {
+          "startingColumn": 18,
+          "startingLine": 250
+        }
+      },
+      {
+        "comment": "",
+        "key": "Goal %@ %@",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 254
+        }
+      },
+      {
+        "comment": "",
+        "key": "%@",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 257
+        }
+      },
+      {
+        "comment": "",
+        "key": "Macro Split",
+        "location": {
+          "startingColumn": 18,
+          "startingLine": 304
+        }
+      },
+      {
+        "comment": "",
+        "key": "Log meals to see your macro distribution.",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 343
+        }
+      },
+      {
+        "comment": "",
+        "key": "%@ %@",
+        "location": {
+          "startingColumn": 18,
+          "startingLine": 358
+        }
+      },
+      {
+        "comment": "",
+        "key": "%@g / %@g",
+        "location": {
+          "startingColumn": 18,
+          "startingLine": 375
+        }
+      },
+      {
+        "comment": "",
+        "key": "%@ of goal",
+        "location": {
+          "startingColumn": 29,
+          "startingLine": 378
+        }
+      },
+      {
+        "comment": "",
+        "key": "No goal set",
+        "location": {
+          "startingColumn": 101,
+          "startingLine": 378
+        }
+      }
+    ]
+  },
+  "version": 1
+}

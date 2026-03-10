@@ -8,9 +8,11 @@ struct ResetService {
         try deleteAll(IngredientRecord.self)
         try deleteAll(MealIngredientSnapshotRecord.self)
         try deleteAll(MealRecord.self)
+        try deleteAll(WaterEntryRecord.self)
         try deleteAll(SettingsRecord.self)
         try deleteAll(AIIntegrationRecord.self)
         try deleteAll(InsightRecord.self)
+        try deleteAll(TodaySoFarRecord.self)
 
         try context.save()
         seedDefaults()

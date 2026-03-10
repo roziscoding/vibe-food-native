@@ -12,26 +12,36 @@ import UIKit
 
 struct ContentView: View {
     @Environment(\.colorScheme) private var colorScheme
-    @State private var selectedTab: Tab = .dashboard
+    @State private var selectedTab: Tab = .input
     @State private var dayStore = DaySelectionStore()
 
     var body: some View {
         TabView(selection: $selectedTab) {
             DashboardView()
-                .tabItem { Label("Dashboard", systemImage: "house") }
+                .tabItem { Label("Overview", systemImage: "house") }
                 .tag(Tab.dashboard)
 
-            InsightsView()
-                .tabItem { Label("Insights", systemImage: "sparkles") }
-                .tag(Tab.insights)
+            FoodView()
+                .tabItem { Label("Food", systemImage: "fork.knife.circle") }
+                .tag(Tab.food)
 
-            MealsView()
-                .tabItem { Label("Meals", systemImage: "fork.knife") }
-                .tag(Tab.meals)
+            InputView()
+                .tabItem {
+                    Label {
+                        Text("Input")
+                    } icon: {
+#if canImport(UIKit)
+                        Image(uiImage: inputTabIconImage())
+#else
+                        Image(systemName: "plus.circle.fill")
+#endif
+                    }
+                }
+                .tag(Tab.input)
 
-            IngredientsView()
-                .tabItem { Label("Ingredients", systemImage: "leaf") }
-                .tag(Tab.ingredients)
+            WaterView()
+                .tabItem { Label("Water", systemImage: "drop") }
+                .tag(Tab.water)
 
             SettingsView()
                 .tabItem { Label("Settings", systemImage: "gearshape") }
@@ -52,9 +62,9 @@ struct ContentView: View {
 
 private enum Tab: Hashable {
     case dashboard
-    case insights
-    case meals
-    case ingredients
+    case food
+    case input
+    case water
     case settings
 }
 
@@ -143,5 +153,13 @@ private func selectionIndicatorImage(for colorScheme: ColorScheme) -> UIImage? {
         withCapInsets: UIEdgeInsets(top: 24, left: 32, bottom: 24, right: 32),
         resizingMode: .stretch
     )
+}
+
+private func inputTabIconImage() -> UIImage {
+    let configuration = UIImage.SymbolConfiguration(pointSize: 17, weight: .semibold)
+    let base = UIImage(systemName: "plus.circle.fill", withConfiguration: configuration)
+        ?? UIImage(systemName: "plus.circle.fill")
+        ?? UIImage()
+    return base.withTintColor(.systemBlue, renderingMode: .alwaysOriginal)
 }
 #endif
