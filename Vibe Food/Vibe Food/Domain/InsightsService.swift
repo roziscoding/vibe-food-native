@@ -58,7 +58,8 @@ struct InsightInputBuilder {
         sourceDay: String,
         meals: [MealRecord],
         goals: MacroTargets,
-        profile: InsightGenerationInput.ProfilePayload?
+        profile: InsightGenerationInput.ProfilePayload?,
+        isPartialDayData: Bool = false
     ) -> InsightGenerationInput {
         let summary = summaryService.summary(for: meals, goals: goals)
 
@@ -85,9 +86,17 @@ struct InsightInputBuilder {
                     protein: $0.protein,
                     carbs: $0.carbs,
                     fat: $0.fat,
-                    time: AppFormatters.shortTime.string(from: $0.consumedAt)
+                    mealTime: AppFormatters.shortTime.string(from: $0.consumedAt),
+                    ingredients: $0.ingredientSnapshots.map {
+                        InsightGenerationInput.MealIngredientPayload(
+                            name: $0.name,
+                            quantity: $0.amount,
+                            unit: $0.unit
+                        )
+                    }
                 )
-            }
+            },
+            isPartialDayData: isPartialDayData
         )
     }
 }
@@ -109,13 +118,20 @@ struct InsightGenerationInput: Encodable {
         let fat: Double
     }
 
+    struct MealIngredientPayload: Encodable {
+        let name: String
+        let quantity: Double
+        let unit: String
+    }
+
     struct MealPayload: Encodable {
         let name: String
         let calories: Double
         let protein: Double
         let carbs: Double
         let fat: Double
-        let time: String
+        let mealTime: String
+        let ingredients: [MealIngredientPayload]
     }
 
     struct MacroPayload: Encodable {
@@ -131,6 +147,7 @@ struct InsightGenerationInput: Encodable {
     let goals: GoalPayload
     let previousDayTotals: MacroPayload
     let previousDayMeals: [MealPayload]
+    let isPartialDayData: Bool
 }
 
 struct InsightsService {
@@ -593,13 +610,16 @@ struct InsightsService {
     """
 
     private static let todaySoFarInstructions = """
-    You are generating a very short nutrition coaching message about the user's meals for the selected day.
+    You are generating a very short nutrition coaching message about the user's meals logged so far today.
 
     Requirements:
     - Return structured output with one field: message.
     - The message must be exactly one short sentence and no more than 24 words.
+    - This input contains partial data from today only (not the full day and not yesterday), so treat it as an in-progress snapshot.
+    - The shared fields previousDayTotals and previousDayMeals represent today's partial totals and meals in this prompt.
     - Keep the tone encouraging, specific, and slightly corrective when needed.
-    - Mention what looks good so far and give one practical nudge grounded in that day's meals.
+    - Mention what looks good so far and give one practical nudge grounded in today's logged meals.
+    - Use each meal's mealTime and ingredients list (name, quantity, unit) when relevant for grounding.
     - If the user has not logged any meals yet, encourage a strong first meal with protein and reasonable balance.
     - If body profile and objective are available, use them to tailor the nudge.
     - Use the same language implied by the meal names when possible. Default to English if unclear.

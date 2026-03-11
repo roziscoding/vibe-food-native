@@ -107,7 +107,7 @@ private struct FoodContentView: View {
 
                     metricPill(
                         title: "Calories",
-                        value: "\(store.todayCalories.formatted(.number)) kcal",
+                        value: "\(AppFormatters.calorieText(store.todayCalories)) kcal",
                         subtitle: store.lastMealTimeText,
                         color: MacroColors.protein
                     )
@@ -208,9 +208,10 @@ final class FoodStore {
             let ingredients = try ingredientRepository.fetchActiveIngredients()
 
             todayMealsCount = meals.count
-            todayCalories = meals.reduce(0) { partial, meal in
+            let totalCalories = meals.reduce(0) { partial, meal in
                 partial + meal.calories
             }
+            todayCalories = NutritionRounding.roundCalories(totalCalories)
             lastMealAt = meals.max(by: { $0.consumedAt < $1.consumedAt })?.consumedAt
             ingredientCount = ingredients.count
             errorMessage = nil

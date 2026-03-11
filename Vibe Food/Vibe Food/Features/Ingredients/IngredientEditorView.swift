@@ -76,36 +76,36 @@ struct IngredientEditorView: View {
                         HStack {
                             Text("Calories")
                             Spacer()
-                            TextField("", value: $draft.calories, format: .number)
+                            TextField("", value: $draft.calories, format: AppFormatters.integerInputFormat)
                                 .multilineTextAlignment(.trailing)
-                                .keyboardType(.decimalPad)
+                                .keyboardType(.numberPad)
                                 .frame(maxWidth: 140)
                         }
 
                         HStack {
                             Text("Protein")
                             Spacer()
-                            TextField("", value: $draft.protein, format: .number)
+                            TextField("", value: $draft.protein, format: AppFormatters.integerInputFormat)
                                 .multilineTextAlignment(.trailing)
-                                .keyboardType(.decimalPad)
+                                .keyboardType(.numberPad)
                                 .frame(maxWidth: 140)
                         }
 
                         HStack {
                             Text("Carbs")
                             Spacer()
-                            TextField("", value: $draft.carbs, format: .number)
+                            TextField("", value: $draft.carbs, format: AppFormatters.integerInputFormat)
                                 .multilineTextAlignment(.trailing)
-                                .keyboardType(.decimalPad)
+                                .keyboardType(.numberPad)
                                 .frame(maxWidth: 140)
                         }
 
                         HStack {
                             Text("Fat")
                             Spacer()
-                            TextField("", value: $draft.fat, format: .number)
+                            TextField("", value: $draft.fat, format: AppFormatters.integerInputFormat)
                                 .multilineTextAlignment(.trailing)
-                                .keyboardType(.decimalPad)
+                                .keyboardType(.numberPad)
                                 .frame(maxWidth: 140)
                         }
                     }
@@ -170,14 +170,10 @@ struct IngredientEditorView: View {
         let fat = draft.fat / draft.portionSize
 
         return (
-            format(calories),
-            format(protein),
-            format(carbs),
-            format(fat)
+            AppFormatters.calorieText(calories),
+            AppFormatters.macroText(protein),
+            AppFormatters.macroText(carbs),
+            AppFormatters.macroText(fat)
         )
-    }
-
-    private func format(_ value: Double) -> String {
-        AppFormatters.number.string(from: NSNumber(value: value)) ?? "0"
     }
 }

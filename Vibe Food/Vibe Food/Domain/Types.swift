@@ -14,6 +14,57 @@ struct MacroTargets: Equatable {
     var fat: Double
 }
 
+enum NutritionRounding {
+    static func roundCalories(_ value: Double) -> Double {
+        round(value, strategy: .up)
+    }
+
+    static func roundMacro(_ value: Double) -> Double {
+        round(value, strategy: .down)
+    }
+
+    static func round(_ breakdown: MacroBreakdown) -> MacroBreakdown {
+        MacroBreakdown(
+            calories: roundCalories(breakdown.calories),
+            protein: roundMacro(breakdown.protein),
+            carbs: roundMacro(breakdown.carbs),
+            fat: roundMacro(breakdown.fat)
+        )
+    }
+
+    static func round(_ targets: MacroTargets) -> MacroTargets {
+        MacroTargets(
+            calories: roundCalories(targets.calories),
+            protein: roundMacro(targets.protein),
+            carbs: roundMacro(targets.carbs),
+            fat: roundMacro(targets.fat)
+        )
+    }
+
+    static func round(_ draft: IngredientDraft) -> IngredientDraft {
+        var rounded = draft
+        rounded.calories = roundCalories(draft.calories)
+        rounded.protein = roundMacro(draft.protein)
+        rounded.carbs = roundMacro(draft.carbs)
+        rounded.fat = roundMacro(draft.fat)
+        return rounded
+    }
+
+    static func round(_ draft: MealDraft) -> MealDraft {
+        var rounded = draft
+        rounded.calories = roundCalories(draft.calories)
+        rounded.protein = roundMacro(draft.protein)
+        rounded.carbs = roundMacro(draft.carbs)
+        rounded.fat = roundMacro(draft.fat)
+        return rounded
+    }
+
+    private static func round(_ value: Double, strategy: FloatingPointRoundingRule) -> Double {
+        guard value.isFinite else { return 0 }
+        return max(0, value).rounded(strategy)
+    }
+}
+
 struct IngredientDraft: Equatable, Identifiable {
     var id: UUID
     var name: String
@@ -51,20 +102,30 @@ struct MealDraftIngredientLine: Equatable, Identifiable {
     var name: String
     var amount: Double
     var unit: String
+    var amountInputMode: MealIngredientAmountInputMode
 
     init(
         id: UUID = UUID(),
         ingredientId: UUID? = nil,
         name: String,
         amount: Double,
-        unit: String
+        unit: String,
+        amountInputMode: MealIngredientAmountInputMode = .unit
     ) {
         self.id = id
         self.ingredientId = ingredientId
         self.name = name
         self.amount = amount
         self.unit = unit
+        self.amountInputMode = amountInputMode
     }
+}
+
+enum MealIngredientAmountInputMode: String, Codable, CaseIterable, Identifiable {
+    case portions
+    case unit
+
+    var id: String { rawValue }
 }
 
 struct ImportIssue: Equatable, Identifiable {

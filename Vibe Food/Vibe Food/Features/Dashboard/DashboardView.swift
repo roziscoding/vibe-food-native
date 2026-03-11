@@ -141,8 +141,22 @@ private struct DashboardContentView: View {
             AppSectionTitle(title: "Today")
 
             HStack(spacing: 12) {
-                summaryCard(title: "Calories", value: totals.calories, goal: store.goals.calories, unit: "kcal", color: MacroColors.calories)
-                summaryCard(title: "Water", value: store.waterTotalMl, goal: store.waterGoalMl, unit: "ml", color: .cyan)
+                summaryCard(
+                    title: "Calories",
+                    value: totals.calories,
+                    goal: store.goals.calories,
+                    unit: "kcal",
+                    color: MacroColors.calories,
+                    numberText: AppFormatters.calorieText
+                )
+                summaryCard(
+                    title: "Water",
+                    value: store.waterTotalMl,
+                    goal: store.waterGoalMl,
+                    unit: "ml",
+                    color: .cyan,
+                    numberText: AppFormatters.integerText
+                )
             }
 
             macroDistributionCard(totals: totals)
@@ -229,7 +243,7 @@ private struct DashboardContentView: View {
                                 .foregroundStyle(AppGlass.textSubtle)
                         }
                         Spacer()
-                        Text("\(meal.calories, format: .number) kcal")
+                        Text("\(AppFormatters.calorieText(meal.calories)) kcal")
                             .font(.system(size: 15, weight: .semibold, design: .rounded))
                             .foregroundStyle(MacroColors.calories)
                     }
@@ -240,18 +254,25 @@ private struct DashboardContentView: View {
         }
     }
 
-    private func summaryCard(title: String, value: Double, goal: Double, unit: String, color: Color) -> some View {
+    private func summaryCard(
+        title: String,
+        value: Double,
+        goal: Double,
+        unit: String,
+        color: Color,
+        numberText: (Double) -> String
+    ) -> some View {
         let progress = goal > 0 ? min(1, value / goal) : 0
         return VStack(alignment: .leading, spacing: 8) {
             Text(title)
                 .font(.system(size: 12, weight: .bold, design: .rounded))
                 .foregroundStyle(AppGlass.textSubtle)
                 .textCase(.uppercase)
-            Text("\(value, format: .number) \(unit)")
+            Text("\(numberText(value)) \(unit)")
                 .font(.system(size: 22, weight: .semibold, design: .rounded))
                 .foregroundStyle(AppGlass.textPrimary)
             HStack {
-                Text("Goal \(goal, format: .number) \(unit)")
+                Text("Goal \(numberText(goal)) \(unit)")
                     .font(.system(size: 12, weight: .medium, design: .rounded))
                     .foregroundStyle(AppGlass.textMuted)
                 Text("\(progress, format: .percent.precision(.fractionLength(0)))")
@@ -372,7 +393,7 @@ private struct DashboardContentView: View {
                 .font(.system(size: 11, weight: .bold, design: .rounded))
                 .foregroundStyle(color)
                 .textCase(.uppercase)
-            Text("\(value, format: .number)g / \(goal, format: .number)g")
+            Text("\(AppFormatters.macroText(value))g / \(AppFormatters.macroText(goal))g")
                 .font(.system(size: 13, weight: .semibold, design: .rounded))
                 .foregroundStyle(AppGlass.textPrimary)
             Text(goal > 0 ? "\(progress, format: .percent.precision(.fractionLength(0))) of goal" : "No goal set")
@@ -395,12 +416,12 @@ private struct DashboardContentView: View {
             HStack(spacing: 12) {
                 remainingMetricChip(
                     title: "Calories",
-                    valueText: "\(remainingCalories.formatted(.number)) kcal",
+                    valueText: "\(AppFormatters.calorieText(remainingCalories)) kcal",
                     color: MacroColors.calories
                 )
                 remainingMetricChip(
                     title: "Water",
-                    valueText: "\(remainingWater.formatted(.number)) ml",
+                    valueText: "\(AppFormatters.integerText(remainingWater)) ml",
                     color: .cyan
                 )
             }
@@ -408,17 +429,17 @@ private struct DashboardContentView: View {
             HStack(spacing: 12) {
                 remainingMetricChip(
                     title: "Protein",
-                    valueText: "\(remainingProtein.formatted(.number)) g",
+                    valueText: "\(AppFormatters.macroText(remainingProtein)) g",
                     color: MacroColors.protein
                 )
                 remainingMetricChip(
                     title: "Carbs",
-                    valueText: "\(remainingCarbs.formatted(.number)) g",
+                    valueText: "\(AppFormatters.macroText(remainingCarbs)) g",
                     color: MacroColors.carbs
                 )
                 remainingMetricChip(
                     title: "Fat",
-                    valueText: "\(remainingFat.formatted(.number)) g",
+                    valueText: "\(AppFormatters.macroText(remainingFat)) g",
                     color: MacroColors.fat
                 )
             }

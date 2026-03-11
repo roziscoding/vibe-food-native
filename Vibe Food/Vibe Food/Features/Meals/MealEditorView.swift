@@ -91,33 +91,33 @@ struct MealEditorView: View {
                                     HStack {
                                         Text("Calories")
                                         Spacer()
-                                        TextField("", value: stagedBinding(for: index).calories, format: .number)
+                                        TextField("", value: stagedBinding(for: index).calories, format: AppFormatters.integerInputFormat)
                                             .multilineTextAlignment(.trailing)
-                                            .keyboardType(.decimalPad)
+                                            .keyboardType(.numberPad)
                                             .frame(maxWidth: 140)
                                     }
                                     HStack {
                                         Text("Protein")
                                         Spacer()
-                                        TextField("", value: stagedBinding(for: index).protein, format: .number)
+                                        TextField("", value: stagedBinding(for: index).protein, format: AppFormatters.integerInputFormat)
                                             .multilineTextAlignment(.trailing)
-                                            .keyboardType(.decimalPad)
+                                            .keyboardType(.numberPad)
                                             .frame(maxWidth: 140)
                                     }
                                     HStack {
                                         Text("Carbs")
                                         Spacer()
-                                        TextField("", value: stagedBinding(for: index).carbs, format: .number)
+                                        TextField("", value: stagedBinding(for: index).carbs, format: AppFormatters.integerInputFormat)
                                             .multilineTextAlignment(.trailing)
-                                            .keyboardType(.decimalPad)
+                                            .keyboardType(.numberPad)
                                             .frame(maxWidth: 140)
                                     }
                                     HStack {
                                         Text("Fat")
                                         Spacer()
-                                        TextField("", value: stagedBinding(for: index).fat, format: .number)
+                                        TextField("", value: stagedBinding(for: index).fat, format: AppFormatters.integerInputFormat)
                                             .multilineTextAlignment(.trailing)
-                                            .keyboardType(.decimalPad)
+                                            .keyboardType(.numberPad)
                                             .frame(maxWidth: 140)
                                     }
                                 }
@@ -189,15 +189,28 @@ struct MealEditorView: View {
                             }
                         }
 
+                        Picker("Amount In", selection: $line.amountInputMode) {
+                            Text("Portions").tag(MealIngredientAmountInputMode.portions)
+                            Text(line.unit.isEmpty ? "Unit" : line.unit).tag(MealIngredientAmountInputMode.unit)
+                        }
+                        .pickerStyle(.segmented)
+                        .disabled(line.ingredientId == nil)
+
                         HStack {
                             Text("Amount")
                             Spacer()
-                            TextField("", value: $line.amount, format: .number)
+                            TextField("", value: amountInputBinding(for: $line), format: .number)
                                 .multilineTextAlignment(.trailing)
                                 .keyboardType(.decimalPad)
                                 .frame(maxWidth: 140)
-                            Text(line.unit)
+                            Text(amountInputUnitLabel(for: line))
                                 .foregroundStyle(.secondary)
+                        }
+
+                        if let portionHint = portionHint(for: line) {
+                            Text(portionHint)
+                                .foregroundStyle(.secondary)
+                                .font(.footnote)
                         }
 
                         if line.ingredientId == nil {
@@ -237,9 +250,9 @@ struct MealEditorView: View {
         HStack {
             Text(title)
             Spacer()
-            TextField("", value: value, format: .number)
+            TextField("", value: value, format: AppFormatters.integerInputFormat)
                 .multilineTextAlignment(.trailing)
-                .keyboardType(.decimalPad)
+                .keyboardType(.numberPad)
                 .frame(maxWidth: 120)
             Text(unit)
                 .foregroundStyle(.secondary)
@@ -281,6 +294,65 @@ struct MealEditorView: View {
         )
     }
 
+    private func amountInputBinding(for line: Binding<MealDraftIngredientLine>) -> Binding<Double> {
+        Binding(
+            get: {
+                let lineValue = line.wrappedValue
+                guard lineValue.amountInputMode == .portions,
+                      let portionSize = portionSize(for: lineValue),
+                      portionSize > 0
+                else {
+                    return lineValue.amount
+                }
+                return lineValue.amount / portionSize
+            },
+            set: { newValue in
+                var updatedLine = line.wrappedValue
+                guard updatedLine.amountInputMode == .portions,
+                      let portionSize = portionSize(for: updatedLine),
+                      portionSize > 0
+                else {
+                    updatedLine.amount = newValue
+                    line.wrappedValue = updatedLine
+                    return
+                }
+
+                updatedLine.amount = newValue * portionSize
+                line.wrappedValue = updatedLine
+            }
+        )
+    }
+
+    private func amountInputUnitLabel(for line: MealDraftIngredientLine) -> String {
+        switch line.amountInputMode {
+        case .portions:
+            return "portions"
+        case .unit:
+            return line.unit.isEmpty ? "unit" : line.unit
+        }
+    }
+
+    private func portionHint(for line: MealDraftIngredientLine) -> String? {
+        guard line.amountInputMode == .portions,
+              let portionSize = portionSize(for: line),
+              portionSize > 0
+        else {
+            return nil
+        }
+
+        let unitLabel = line.unit.isEmpty ? "unit" : line.unit
+        return "1 portion = \(portionSize.formatted(.number)) \(unitLabel)"
+    }
+
+    private func portionSize(for line: MealDraftIngredientLine) -> Double? {
+        guard let ingredientId = line.ingredientId,
+              let ingredient = store.ingredients.first(where: { $0.id == ingredientId })
+        else {
+            return nil
+        }
+        return ingredient.portionSize
+    }
+
     private func storeTotals(from lines: [MealDraftIngredientLine]) -> MacroBreakdown {
         let validLines = lines.filter { $0.ingredientId != nil && $0.amount > 0 }
         return storeTotals(for: validLines)
@@ -297,6 +369,6 @@ struct MealEditorView: View {
             totals.carbs += ingredient.carbsPerUnit * line.amount
             totals.fat += ingredient.fatPerUnit * line.amount
         }
-        return totals
+        return NutritionRounding.round(totals)
     }
 }

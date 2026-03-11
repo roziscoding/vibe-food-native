@@ -255,64 +255,41 @@ private struct MealsContentView: View {
                             .listRowBackground(Color.clear)
                             .listRowSeparator(.hidden)
                     } else {
-                        VStack(spacing: 0) {
-                            ForEach(Array(store.meals.enumerated()), id: \.element.id) { index, meal in
-                                VStack(alignment: .leading, spacing: 6) {
-                                    Text(meal.name)
-                                        .font(.system(size: 18, weight: .semibold, design: .rounded))
-                                        .foregroundStyle(AppGlass.textPrimary)
-                                    macroLineView(for: meal)
-                                }
-                                .padding(16)
-                                .frame(maxWidth: .infinity, alignment: .leading)
-                                .contentShape(Rectangle())
-                                .onTapGesture {
-                                    store.beginEdit(meal)
-                                }
-
-                                if index < store.meals.count - 1 {
-                                    Divider()
-                                        .overlay(AppGlass.secondaryBorder)
-                                        .padding(.horizontal, 16)
+                        ForEach(store.meals) { meal in
+                            VStack(alignment: .leading, spacing: 6) {
+                                Text(meal.name)
+                                    .font(.system(size: 18, weight: .semibold, design: .rounded))
+                                    .foregroundStyle(AppGlass.textPrimary)
+                                macroLineView(for: meal)
+                            }
+                            .padding(16)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .contentShape(Rectangle())
+                            .onTapGesture {
+                                store.beginEdit(meal)
+                            }
+                            .glassPanel(cornerRadius: AppGlass.cardCornerRadius, weight: .secondary)
+                            .listRowInsets(EdgeInsets(top: 6, leading: 20, bottom: 6, trailing: 20))
+                            .listRowBackground(Color.clear)
+                            .listRowSeparator(.hidden)
+                            .swipeActions(edge: .trailing, allowsFullSwipe: true) {
+                                Button(role: .destructive) {
+                                    store.confirmDelete(meal)
+                                } label: {
+                                    Label("Delete", systemImage: "trash")
                                 }
                             }
                         }
-                        .glassPanel(cornerRadius: AppGlass.cardCornerRadius, weight: .secondary)
-                        .listRowInsets(EdgeInsets(top: 8, leading: 20, bottom: 8, trailing: 20))
-                        .listRowBackground(Color.clear)
-                        .listRowSeparator(.hidden)
                     }
                 }
                 .listStyle(.plain)
                 .refreshable {
                     await store.refresh(for: dayStore.localDayKey, around: dayStore.selectedDate)
                 }
-                .scrollDisabled(dayStore.isScrollLockedForDaySwipe)
-                .onScrollPhaseChange { _, newPhase in
-                    dayStore.setVerticalScrollActive(newPhase.isScrolling)
-                }
                 .scrollContentBackground(.hidden)
                 .background(Color.clear)
-                .offset(x: dayStore.horizontalDragOffset)
-                .contentShape(Rectangle())
-                .simultaneousGesture(daySwipeGesture)
             }
         }
-    }
-
-    private var daySwipeGesture: some Gesture {
-        DragGesture(minimumDistance: 24)
-            .onChanged { value in
-                guard shouldHandleDaySwipe(value) else { return }
-                dayStore.updateHorizontalSwipe(translationWidth: value.translation.width)
-            }
-            .onEnded { value in
-                guard shouldHandleDaySwipe(value) else {
-                    dayStore.cancelHorizontalSwipe()
-                    return
-                }
-                dayStore.finishHorizontalSwipe(translationWidth: value.translation.width)
-            }
     }
 
     private func applyInitialActionIfNeeded() {
@@ -324,12 +301,6 @@ private struct MealsContentView: View {
         case .logWithAI:
             store.beginAILog()
         }
-    }
-
-    private func shouldHandleDaySwipe(_ value: DragGesture.Value) -> Bool {
-        let horizontal = abs(value.translation.width)
-        let vertical = abs(value.translation.height)
-        return !dayStore.isVerticalScrollActive && horizontal > 18 && horizontal > vertical * 1.35
     }
 
     private var todaySoFarCard: some View {
@@ -455,10 +426,10 @@ private struct MealsContentView: View {
 
     private func macroLineView(for meal: MealRecord) -> some View {
         let time = AppFormatters.shortTime.string(from: meal.consumedAt)
-        let calories = AppFormatters.number.string(from: NSNumber(value: meal.calories)) ?? "0"
-        let protein = AppFormatters.number.string(from: NSNumber(value: meal.protein)) ?? "0"
-        let carbs = AppFormatters.number.string(from: NSNumber(value: meal.carbs)) ?? "0"
-        let fat = AppFormatters.number.string(from: NSNumber(value: meal.fat)) ?? "0"
+        let calories = AppFormatters.calorieText(meal.calories)
+        let protein = AppFormatters.macroText(meal.protein)
+        let carbs = AppFormatters.macroText(meal.carbs)
+        let fat = AppFormatters.macroText(meal.fat)
 
         return HStack(spacing: 6) {
             Text(time)

@@ -282,10 +282,10 @@ private struct IngredientsListView: View {
     }
 
     private func macroLineView(for ingredient: IngredientRecord) -> some View {
-        let calories = AppFormatters.number.string(from: NSNumber(value: ingredient.caloriesPerPortion)) ?? "0"
-        let protein = AppFormatters.number.string(from: NSNumber(value: ingredient.proteinPerPortion)) ?? "0"
-        let carbs = AppFormatters.number.string(from: NSNumber(value: ingredient.carbsPerPortion)) ?? "0"
-        let fat = AppFormatters.number.string(from: NSNumber(value: ingredient.fatPerPortion)) ?? "0"
+        let calories = AppFormatters.calorieText(ingredient.caloriesPerPortion)
+        let protein = AppFormatters.macroText(ingredient.proteinPerPortion)
+        let carbs = AppFormatters.macroText(ingredient.carbsPerPortion)
+        let fat = AppFormatters.macroText(ingredient.fatPerPortion)
 
         return HStack(spacing: 6) {
             Text("\(calories) kcal")

@@ -15,7 +15,14 @@ struct NutritionDerivationService {
             throw ValidationError.invalidValue(field: "macros")
         }
 
-        return MacroBreakdown(calories: calories, protein: protein, carbs: carbs, fat: fat)
+        return NutritionRounding.round(
+            MacroBreakdown(
+                calories: calories,
+                protein: protein,
+                carbs: carbs,
+                fat: fat
+            )
+        )
     }
 }
 
@@ -30,15 +37,17 @@ struct DailySummaryService {
             )
         }
 
+        let roundedTotals = NutritionRounding.round(totals)
+
         let progress = MacroBreakdown(
-            calories: goals.calories > 0 ? totals.calories / goals.calories : 0,
-            protein: goals.protein > 0 ? totals.protein / goals.protein : 0,
-            carbs: goals.carbs > 0 ? totals.carbs / goals.carbs : 0,
-            fat: goals.fat > 0 ? totals.fat / goals.fat : 0
+            calories: goals.calories > 0 ? roundedTotals.calories / goals.calories : 0,
+            protein: goals.protein > 0 ? roundedTotals.protein / goals.protein : 0,
+            carbs: goals.carbs > 0 ? roundedTotals.carbs / goals.carbs : 0,
+            fat: goals.fat > 0 ? roundedTotals.fat / goals.fat : 0
         )
 
         let dayKey = meals.first?.localDayKey ?? ""
-        return DailySummary(localDayKey: dayKey, meals: meals, totals: totals, goalProgress: progress)
+        return DailySummary(localDayKey: dayKey, meals: meals, totals: roundedTotals, goalProgress: progress)
     }
 }
 
@@ -47,7 +56,7 @@ struct GoalRecommendationService {
         let bmr = bmrValue(input: input)
         let maintenance = bmr * activityMultiplier(level: input.activityLevel, sex: input.sex)
         let adjustment = calorieAdjustment(for: input.objective)
-        let calories = max(1200, round(maintenance + adjustment))
+        let calories = max(1200, NutritionRounding.roundCalories(maintenance + adjustment))
 
         let targets = macroTargets(for: input.objective, calories: calories, weightKg: input.weightKg)
         let waterGoalMl = recommendedWaterGoalMl(for: input)
@@ -103,23 +112,23 @@ struct GoalRecommendationService {
         case .loseWeight:
             return MacroTargets(
                 calories: calories,
-                protein: max(1, round((0.30 * calories) / 4)),
-                carbs: max(1, round((0.45 * calories) / 4)),
-                fat: max(1, round((0.25 * calories) / 9))
+                protein: max(1, NutritionRounding.roundMacro((0.30 * calories) / 4)),
+                carbs: max(1, NutritionRounding.roundMacro((0.45 * calories) / 4)),
+                fat: max(1, NutritionRounding.roundMacro((0.25 * calories) / 9))
             )
         case .maintainWeight:
             return MacroTargets(
                 calories: calories,
-                protein: max(1, round((0.20 * calories) / 4)),
-                carbs: max(1, round((0.50 * calories) / 4)),
-                fat: max(1, round((0.30 * calories) / 9))
+                protein: max(1, NutritionRounding.roundMacro((0.20 * calories) / 4)),
+                carbs: max(1, NutritionRounding.roundMacro((0.50 * calories) / 4)),
+                fat: max(1, NutritionRounding.roundMacro((0.30 * calories) / 9))
             )
         case .gainWeight:
             return MacroTargets(
                 calories: calories,
-                protein: max(1, round((0.20 * calories) / 4)),
-                carbs: max(1, round((0.55 * calories) / 4)),
-                fat: max(1, round((0.25 * calories) / 9))
+                protein: max(1, NutritionRounding.roundMacro((0.20 * calories) / 4)),
+                carbs: max(1, NutritionRounding.roundMacro((0.55 * calories) / 4)),
+                fat: max(1, NutritionRounding.roundMacro((0.25 * calories) / 9))
             )
         case .muscle:
             let fatRaw = (0.25 * calories) / 9
@@ -130,9 +139,9 @@ struct GoalRecommendationService {
 
             return MacroTargets(
                 calories: calories,
-                protein: max(1, round(proteinRaw)),
-                carbs: max(1, round(carbCalories / 4)),
-                fat: max(1, round(fatRaw))
+                protein: max(1, NutritionRounding.roundMacro(proteinRaw)),
+                carbs: max(1, NutritionRounding.roundMacro(carbCalories / 4)),
+                fat: max(1, NutritionRounding.roundMacro(fatRaw))
             )
         }
     }

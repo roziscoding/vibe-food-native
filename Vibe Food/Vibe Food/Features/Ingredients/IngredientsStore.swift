@@ -91,10 +91,10 @@ final class IngredientsStore {
             name: ingredient.name,
             unit: ingredient.unit,
             portionSize: ingredient.portionSize,
-            calories: ingredient.caloriesPerPortion,
-            protein: ingredient.proteinPerPortion,
-            carbs: ingredient.carbsPerPortion,
-            fat: ingredient.fatPerPortion
+            calories: NutritionRounding.roundCalories(ingredient.caloriesPerPortion),
+            protein: NutritionRounding.roundMacro(ingredient.proteinPerPortion),
+            carbs: NutritionRounding.roundMacro(ingredient.carbsPerPortion),
+            fat: NutritionRounding.roundMacro(ingredient.fatPerPortion)
         )
         isPresentingEditor = true
     }
@@ -117,6 +117,8 @@ final class IngredientsStore {
         }
         draft.name = trimmedName
         draft.unit = draft.unit.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+        draft = NutritionRounding.round(draft)
+        self.draft = draft
 
         do {
             let perUnit = try derivationService.derivePerUnit(from: draft)
@@ -235,7 +237,7 @@ final class IngredientsStore {
             """
 
             let result = try await scanService.scan(image: image, integration: integration)
-            draft = result.draft
+            draft = NutritionRounding.round(result.draft)
             editingIngredientId = nil
             scanOutput = result.outputText
             scanPhase = .success
@@ -291,7 +293,7 @@ final class IngredientsStore {
     func importFromData(_ data: Data) {
         do {
             let importedDraft = try importService.parse(data: data)
-            draft = importedDraft
+            draft = NutritionRounding.round(importedDraft)
             editingIngredientId = nil
             isPresentingImportSheet = false
             isPresentingEditor = true

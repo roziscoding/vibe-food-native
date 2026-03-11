@@ -164,11 +164,13 @@ final class DashboardStore {
 
     private func refreshGoals() throws {
         if let settings = try settingsRepository.fetchSettings() {
-            goals = MacroTargets(
-                calories: settings.calorieGoal,
-                protein: settings.proteinGoal,
-                carbs: settings.carbsGoal,
-                fat: settings.fatGoal
+            goals = NutritionRounding.round(
+                MacroTargets(
+                    calories: settings.calorieGoal,
+                    protein: settings.proteinGoal,
+                    carbs: settings.carbsGoal,
+                    fat: settings.fatGoal
+                )
             )
             waterGoalMl = settings.waterGoal ?? 2000
             showsInsights = settings.showsInsights ?? true

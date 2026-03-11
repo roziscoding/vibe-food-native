@@ -194,10 +194,10 @@ final class MealsStore {
             draft = MealDraft(
                 id: meal.id,
                 name: meal.name,
-                calories: meal.calories,
-                protein: meal.protein,
-                carbs: meal.carbs,
-                fat: meal.fat,
+                calories: NutritionRounding.roundCalories(meal.calories),
+                protein: NutritionRounding.roundMacro(meal.protein),
+                carbs: NutritionRounding.roundMacro(meal.carbs),
+                fat: NutritionRounding.roundMacro(meal.fat),
                 consumedAt: meal.consumedAt,
                 timeZoneIdentifier: meal.timeZoneIdentifier,
                 localDayKey: meal.localDayKey,
@@ -218,10 +218,10 @@ final class MealsStore {
             draft = MealDraft(
                 id: meal.id,
                 name: meal.name,
-                calories: meal.calories,
-                protein: meal.protein,
-                carbs: meal.carbs,
-                fat: meal.fat,
+                calories: NutritionRounding.roundCalories(meal.calories),
+                protein: NutritionRounding.roundMacro(meal.protein),
+                carbs: NutritionRounding.roundMacro(meal.carbs),
+                fat: NutritionRounding.roundMacro(meal.fat),
                 consumedAt: meal.consumedAt,
                 timeZoneIdentifier: meal.timeZoneIdentifier,
                 localDayKey: meal.localDayKey,
@@ -311,7 +311,8 @@ final class MealsStore {
 
             let (lines, issues) = resolveMatchedIngredientsAI(result.payload.matchedIngredients)
             let staged = result.payload.newIngredients.map {
-                IngredientDraft(
+                NutritionRounding.round(
+                    IngredientDraft(
                     name: $0.name,
                     unit: $0.unit.lowercased(),
                     portionSize: $0.portionSize,
@@ -319,6 +320,7 @@ final class MealsStore {
                     protein: $0.protein,
                     carbs: $0.carbs,
                     fat: $0.fat
+                    )
                 )
             }
 
@@ -383,7 +385,8 @@ final class MealsStore {
             let payload = try importService.parse(data: data)
             let (lines, issues) = resolveMatchedIngredients(payload.matchedIngredients)
             let staged = payload.newIngredients.map {
-                IngredientDraft(
+                NutritionRounding.round(
+                    IngredientDraft(
                     name: $0.name,
                     unit: $0.unit.lowercased(),
                     portionSize: $0.portionSize,
@@ -391,6 +394,7 @@ final class MealsStore {
                     protein: $0.protein,
                     carbs: $0.carbs,
                     fat: $0.fat
+                    )
                 )
             }
 
@@ -449,6 +453,8 @@ final class MealsStore {
         draft.name = trimmedName
         draft.timeZoneIdentifier = TimeZone.current.identifier
         draft.localDayKey = LocalDayKey.key(for: draft.consumedAt, timeZone: .current)
+        draft = NutritionRounding.round(draft)
+        self.draft = draft
 
         do {
             if !draft.stagedIngredients.isEmpty {
@@ -607,7 +613,8 @@ final class MealsStore {
                     sourceDay: dayKey,
                     meals: meals,
                     goals: goals,
-                    profile: profile
+                    profile: profile,
+                    isPartialDayData: true
                 )
                 inputLog = self.makeTodaySoFarInputLog(input: input)
                 let integration = try self.aiIntegrationRepository.fetchIntegration()
@@ -755,16 +762,18 @@ final class MealsStore {
     }
 
     private func upsertMeal(with draft: MealDraft, snapshots: [MealIngredientSnapshotRecord]) throws {
+        let roundedDraft = NutritionRounding.round(draft)
+
         if let editingId = editingMealId,
            let existing = meals.first(where: { $0.id == editingId }) {
-            existing.name = draft.name
-            existing.calories = draft.calories
-            existing.protein = draft.protein
-            existing.carbs = draft.carbs
-            existing.fat = draft.fat
-            existing.consumedAt = draft.consumedAt
-            existing.timeZoneIdentifier = draft.timeZoneIdentifier
-            existing.localDayKey = draft.localDayKey
+            existing.name = roundedDraft.name
+            existing.calories = roundedDraft.calories
+            existing.protein = roundedDraft.protein
+            existing.carbs = roundedDraft.carbs
+            existing.fat = roundedDraft.fat
+            existing.consumedAt = roundedDraft.consumedAt
+            existing.timeZoneIdentifier = roundedDraft.timeZoneIdentifier
+            existing.localDayKey = roundedDraft.localDayKey
             existing.touch(updatedBy: deviceId)
 
             existing.ingredientSnapshots.forEach { context.delete($0) }
@@ -773,14 +782,14 @@ final class MealsStore {
             try mealRepository.save()
         } else {
             let record = MealRecord(
-                name: draft.name,
-                calories: draft.calories,
-                protein: draft.protein,
-                carbs: draft.carbs,
-                fat: draft.fat,
-                consumedAt: draft.consumedAt,
-                timeZoneIdentifier: draft.timeZoneIdentifier,
-                localDayKey: draft.localDayKey,
+                name: roundedDraft.name,
+                calories: roundedDraft.calories,
+                protein: roundedDraft.protein,
+                carbs: roundedDraft.carbs,
+                fat: roundedDraft.fat,
+                consumedAt: roundedDraft.consumedAt,
+                timeZoneIdentifier: roundedDraft.timeZoneIdentifier,
+                localDayKey: roundedDraft.localDayKey,
                 lastModifiedByDeviceId: deviceId,
                 ingredientSnapshots: snapshots
             )
@@ -799,7 +808,7 @@ final class MealsStore {
             totals.carbs += ingredient.carbsPerUnit * line.amount
             totals.fat += ingredient.fatPerUnit * line.amount
         }
-        return totals
+        return NutritionRounding.round(totals)
     }
 
     private func resolveMatchedIngredients(
@@ -904,7 +913,8 @@ final class MealsStore {
                 ingredientId: ingredient.id,
                 name: ingredient.name,
                 amount: ingredient.portionSize,
-                unit: ingredient.unit
+                unit: ingredient.unit,
+                amountInputMode: .portions
             )
         }
     }
