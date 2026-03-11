@@ -1,4 +1,5 @@
 import SwiftUI
+import UIKit
 
 struct WaterView: View {
     @EnvironmentObject private var appContainer: AppContainer
@@ -30,6 +31,7 @@ private struct WaterContentView: View {
     @Environment(DaySelectionStore.self) private var dayStore
     @Bindable var store: WaterStore
     @State private var errorReportPayload: ExportPayload?
+    @State private var isKeyboardPresented: Bool = false
 
     var body: some View {
         NavigationStack {
@@ -94,7 +96,17 @@ private struct WaterContentView: View {
                 }
             }
             .toolbar(.hidden, for: .navigationBar)
-            .keyboardDoneToolbar()
+            .onReceive(NotificationCenter.default.publisher(for: UIResponder.keyboardWillShowNotification)) { _ in
+                isKeyboardPresented = true
+            }
+            .onReceive(NotificationCenter.default.publisher(for: UIResponder.keyboardWillHideNotification)) { _ in
+                isKeyboardPresented = false
+            }
+            .safeAreaInset(edge: .bottom, spacing: 0) {
+                if isKeyboardPresented {
+                    keyboardDismissBar
+                }
+            }
             .onAppear {
                 store.load(for: dayStore.localDayKey)
                 store.preloadAdjacentDays(around: dayStore.selectedDate)
@@ -258,6 +270,34 @@ private struct WaterContentView: View {
                 .lineLimit(1)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    private var keyboardDismissBar: some View {
+        HStack {
+            Spacer()
+            Button("Done") {
+                dismissKeyboard()
+            }
+            .font(.system(size: 15, weight: .semibold, design: .rounded))
+            .foregroundStyle(AppGlass.accent)
+        }
+        .padding(.horizontal, 20)
+        .padding(.vertical, 12)
+        .background(.ultraThinMaterial)
+        .overlay(alignment: .top) {
+            Rectangle()
+                .fill(AppGlass.secondaryBorder)
+                .frame(height: 1)
+        }
+    }
+
+    private func dismissKeyboard() {
+        UIApplication.shared.sendAction(
+            #selector(UIResponder.resignFirstResponder),
+            to: nil,
+            from: nil,
+            for: nil
+        )
     }
 
     private func waterEntryRow(_ entry: WaterEntryRecord) -> some View {

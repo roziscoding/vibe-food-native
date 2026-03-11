@@ -1,6 +1,7 @@
 import SwiftUI
 import SwiftData
 import UniformTypeIdentifiers
+import UIKit
 import os
 
 private let settingsViewLogger = Logger(subsystem: "ninja.roz.vibefood", category: "SettingsView")
@@ -21,10 +22,24 @@ struct SettingsView: View {
 }
 
 private struct SettingsFormView: View {
+    private enum FocusField: Hashable {
+        case calorieGoal
+        case proteinGoal
+        case carbsGoal
+        case fatGoal
+        case waterGoal
+        case quickWater1
+        case quickWater2
+        case quickWater3
+        case aiApiKey
+    }
+
     @EnvironmentObject private var appContainer: AppContainer
     @Bindable var store: SettingsStore
     @State private var isReadyForAutoSave: Bool = false
     @State private var errorReportPayload: ExportPayload?
+    @State private var isKeyboardPresented: Bool = false
+    @FocusState private var focusedField: FocusField?
 
     var body: some View {
         settingsModalFlows
@@ -35,7 +50,17 @@ private struct SettingsFormView: View {
             mainContent
         }
         .toolbar(.hidden, for: .navigationBar)
-        .keyboardDoneToolbar()
+        .onReceive(NotificationCenter.default.publisher(for: UIResponder.keyboardWillShowNotification)) { _ in
+            isKeyboardPresented = true
+        }
+        .onReceive(NotificationCenter.default.publisher(for: UIResponder.keyboardWillHideNotification)) { _ in
+            isKeyboardPresented = false
+        }
+        .safeAreaInset(edge: .bottom, spacing: 0) {
+            if isKeyboardPresented {
+                keyboardDismissBar
+            }
+        }
     }
 
     private var settingsAutoSaveFlows: some View {
@@ -201,6 +226,7 @@ private struct SettingsFormView: View {
                 .padding(.top, 20)
                 .padding(.bottom, 120)
             }
+            .scrollDismissesKeyboard(.interactively)
             .scrollIndicators(.hidden)
         }
     }
@@ -210,10 +236,10 @@ private struct SettingsFormView: View {
             AppSectionTitle(title: "Goals")
 
             VStack(spacing: AppGlass.sectionSpacing) {
-                goalRow(title: "Calories", unit: "kcal", value: $store.calorieGoal)
-                goalRow(title: "Protein", unit: "g", value: $store.proteinGoal)
-                goalRow(title: "Carbs", unit: "g", value: $store.carbsGoal)
-                goalRow(title: "Fat", unit: "g", value: $store.fatGoal)
+                goalRow(title: "Calories", unit: "kcal", value: $store.calorieGoal, focusField: .calorieGoal)
+                goalRow(title: "Protein", unit: "g", value: $store.proteinGoal, focusField: .proteinGoal)
+                goalRow(title: "Carbs", unit: "g", value: $store.carbsGoal, focusField: .carbsGoal)
+                goalRow(title: "Fat", unit: "g", value: $store.fatGoal, focusField: .fatGoal)
             }
             .padding(18)
             .glassPanel(cornerRadius: AppGlass.cardCornerRadius, weight: .secondary)
@@ -255,7 +281,7 @@ private struct SettingsFormView: View {
             AppSectionTitle(title: "Hydration")
 
             VStack(spacing: AppGlass.sectionSpacing) {
-                goalRow(title: "Water Goal", unit: "ml", value: $store.waterGoal)
+                goalRow(title: "Water Goal", unit: "ml", value: $store.waterGoal, focusField: .waterGoal)
             }
             .padding(18)
             .glassPanel(cornerRadius: AppGlass.cardCornerRadius, weight: .secondary)
@@ -267,9 +293,9 @@ private struct SettingsFormView: View {
                     .font(.system(size: 13, weight: .medium, design: .rounded))
 
                 HStack(spacing: 10) {
-                    quickWaterAmountField(title: "1", value: $store.quickWaterAmount1)
-                    quickWaterAmountField(title: "2", value: $store.quickWaterAmount2)
-                    quickWaterAmountField(title: "3", value: $store.quickWaterAmount3)
+                    quickWaterAmountField(title: "1", value: $store.quickWaterAmount1, focusField: .quickWater1)
+                    quickWaterAmountField(title: "2", value: $store.quickWaterAmount2, focusField: .quickWater2)
+                    quickWaterAmountField(title: "3", value: $store.quickWaterAmount3, focusField: .quickWater3)
                 }
             }
             .padding(18)
@@ -333,6 +359,11 @@ private struct SettingsFormView: View {
                         SecureField("API Key", text: $store.aiApiKeyDraft)
                             .textInputAutocapitalization(.never)
                             .autocorrectionDisabled()
+                            .submitLabel(.done)
+                            .focused($focusedField, equals: .aiApiKey)
+                            .onSubmit {
+                                dismissKeyboard()
+                            }
                             .foregroundStyle(AppGlass.textPrimary)
                             .padding(.horizontal, 14)
                             .frame(height: 48)
@@ -525,7 +556,7 @@ private struct SettingsFormView: View {
         )
     }
 
-    private func goalRow(title: String, unit: String, value: Binding<Double>) -> some View {
+    private func goalRow(title: String, unit: String, value: Binding<Double>, focusField: FocusField) -> some View {
         HStack {
             Text(title)
                 .font(.system(size: 15, weight: .semibold, design: .rounded))
@@ -534,6 +565,8 @@ private struct SettingsFormView: View {
             TextField("", value: value, format: .number)
                 .multilineTextAlignment(.trailing)
                 .keyboardType(.decimalPad)
+                .submitLabel(.done)
+                .focused($focusedField, equals: focusField)
                 .frame(maxWidth: 120)
                 .foregroundStyle(AppGlass.textPrimary)
             Text(unit)
@@ -542,7 +575,7 @@ private struct SettingsFormView: View {
         }
     }
 
-    private func quickWaterAmountField(title: String, value: Binding<Double>) -> some View {
+    private func quickWaterAmountField(title: String, value: Binding<Double>, focusField: FocusField) -> some View {
         VStack(alignment: .leading, spacing: 6) {
             Text("Button \(title)")
                 .font(.system(size: 11, weight: .bold, design: .rounded))
@@ -553,6 +586,8 @@ private struct SettingsFormView: View {
                 TextField("", value: value, format: .number)
                     .multilineTextAlignment(.trailing)
                     .keyboardType(.decimalPad)
+                    .submitLabel(.done)
+                    .focused($focusedField, equals: focusField)
                     .foregroundStyle(AppGlass.textPrimary)
                     .frame(maxWidth: .infinity)
                 Text("ml")
@@ -565,6 +600,35 @@ private struct SettingsFormView: View {
             .clipShape(RoundedRectangle(cornerRadius: 12))
         }
         .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    private var keyboardDismissBar: some View {
+        HStack {
+            Spacer()
+            Button("Done") {
+                dismissKeyboard()
+            }
+            .font(.system(size: 15, weight: .semibold, design: .rounded))
+            .foregroundStyle(AppGlass.accent)
+        }
+        .padding(.horizontal, 20)
+        .padding(.vertical, 12)
+        .background(.ultraThinMaterial)
+        .overlay(alignment: .top) {
+            Rectangle()
+                .fill(AppGlass.secondaryBorder)
+                .frame(height: 1)
+        }
+    }
+
+    private func dismissKeyboard() {
+        focusedField = nil
+        UIApplication.shared.sendAction(
+            #selector(UIResponder.resignFirstResponder),
+            to: nil,
+            from: nil,
+            for: nil
+        )
     }
 
     private func maskedKeyPreview(from key: String) -> String? {
