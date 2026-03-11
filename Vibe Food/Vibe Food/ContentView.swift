@@ -11,19 +11,24 @@ import UIKit
 #endif
 
 struct ContentView: View {
+    @EnvironmentObject private var appContainer: AppContainer
     @Environment(\.colorScheme) private var colorScheme
-    @State private var selectedTab: Tab = .input
-    @State private var dayStore = DaySelectionStore()
 
     var body: some View {
-        TabView(selection: $selectedTab) {
+        let dayStore = appContainer.daySelectionStore
+        TabView(
+            selection: Binding(
+                get: { appContainer.selectedTab },
+                set: { appContainer.selectedTab = $0 }
+            )
+        ) {
             DashboardView()
                 .tabItem { Label("Overview", systemImage: "house") }
-                .tag(Tab.dashboard)
+                .tag(AppTab.dashboard)
 
             FoodView()
                 .tabItem { Label("Food", systemImage: "fork.knife.circle") }
-                .tag(Tab.food)
+                .tag(AppTab.food)
 
             InputView()
                 .tabItem {
@@ -37,15 +42,15 @@ struct ContentView: View {
 #endif
                     }
                 }
-                .tag(Tab.input)
+                .tag(AppTab.input)
 
             WaterView()
                 .tabItem { Label("Water", systemImage: "drop") }
-                .tag(Tab.water)
+                .tag(AppTab.water)
 
             SettingsView()
                 .tabItem { Label("Settings", systemImage: "gearshape") }
-                .tag(Tab.settings)
+                .tag(AppTab.settings)
         }
         .tint(AppGlass.accent)
         .toolbarBackground(.visible, for: .tabBar)
@@ -60,16 +65,9 @@ struct ContentView: View {
     }
 }
 
-private enum Tab: Hashable {
-    case dashboard
-    case food
-    case input
-    case water
-    case settings
-}
-
 #Preview {
     ContentView()
+        .environmentObject(AppContainer())
 }
 
 #if canImport(UIKit)

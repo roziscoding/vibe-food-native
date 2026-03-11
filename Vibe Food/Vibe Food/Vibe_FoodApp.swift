@@ -16,8 +16,15 @@ struct Vibe_FoodApp: App {
         WindowGroup {
             ContentView()
                 .environmentObject(appContainer)
+                .onOpenURL { url in
+                    appContainer.handleCommandURL(url)
+                }
                 .task {
                     appContainer.seedIfNeeded()
+                    appContainer.handleLaunchArguments(
+                        ProcessInfo.processInfo.arguments,
+                        environment: ProcessInfo.processInfo.environment
+                    )
                 }
         }
         .modelContainer(appContainer.modelContainer)
