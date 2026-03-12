@@ -109,3 +109,22 @@ Then the app reseeds default settings and an empty AI integration record.
   - historical implementation plan and phased architecture notes
 - `LLM_CONTEXT.md`
   - compact architecture and editing rules for coding agents
+
+## Simulator Command Control
+
+The app registers a `vibefood://` URL scheme so it can be controlled from the simulator CLI:
+
+- `xcrun simctl openurl <udid> 'vibefood://command/tab?name=water'`
+- `xcrun simctl openurl <udid> 'vibefood://command/day?value=previous'`
+- `xcrun simctl openurl <udid> 'vibefood://command/day?value=2026-03-11'`
+- `xcrun simctl openurl <udid> 'vibefood://command/water/add?ml=350'`
+- `xcrun simctl openurl <udid> 'vibefood://command/water/add?ml=500&date=2026-03-10'`
+
+Equivalent `make` helpers are available at repo root, and they avoid the system `Open` confirmation by relaunching with a launch-time command payload:
+
+- `make command URL='vibefood://command/tab?name=settings'`
+- `make command-tab TAB=dashboard`
+- `make command-day DAY=today`
+- `make command-water ML=300`
+- `make command-meal NAME='Chicken Rice' KCAL=600 PROTEIN=40 CARBS=70 FAT=15 [DATE=YYYY-MM-DD]`
+- `make command-ingredient NAME='Oats' UNIT=g PORTION=100 KCAL=389 PROTEIN=17 CARBS=66 FAT=7`

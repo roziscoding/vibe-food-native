@@ -124,10 +124,18 @@
       },
       {
         "comment": "",
+        "key": "Delete",
+        "location": {
+          "startingColumn": 43,
+          "startingLine": 279
+        }
+      },
+      {
+        "comment": "",
         "key": "Report",
         "location": {
           "startingColumn": 32,
-          "startingLine": 382
+          "startingLine": 353
         }
       },
       {
@@ -135,7 +143,7 @@
         "key": "·",
         "location": {
           "startingColumn": 18,
-          "startingLine": 466
+          "startingLine": 437
         }
       },
       {
@@ -143,7 +151,7 @@
         "key": "%@ kcal",
         "location": {
           "startingColumn": 18,
-          "startingLine": 468
+          "startingLine": 439
         }
       },
       {
@@ -151,7 +159,7 @@
         "key": "·",
         "location": {
           "startingColumn": 18,
-          "startingLine": 470
+          "startingLine": 441
         }
       },
       {
@@ -159,7 +167,7 @@
         "key": "P %@g",
         "location": {
           "startingColumn": 18,
-          "startingLine": 472
+          "startingLine": 443
         }
       },
       {
@@ -167,7 +175,7 @@
         "key": "·",
         "location": {
           "startingColumn": 18,
-          "startingLine": 474
+          "startingLine": 445
         }
       },
       {
@@ -175,7 +183,7 @@
         "key": "C %@g",
         "location": {
           "startingColumn": 18,
-          "startingLine": 476
+          "startingLine": 447
         }
       },
       {
@@ -183,7 +191,7 @@
         "key": "·",
         "location": {
           "startingColumn": 18,
-          "startingLine": 478
+          "startingLine": 449
         }
       },
       {
@@ -191,7 +199,7 @@
         "key": "F %@g",
         "location": {
           "startingColumn": 18,
-          "startingLine": 480
+          "startingLine": 451
         }
       },
       {
@@ -199,7 +207,7 @@
         "key": "e.g. Chicken salad",
         "location": {
           "startingColumn": 39,
-          "startingLine": 505
+          "startingLine": 476
         }
       },
       {
@@ -207,7 +215,7 @@
         "key": "Cancel",
         "location": {
           "startingColumn": 28,
-          "startingLine": 542
+          "startingLine": 513
         }
       },
       {
@@ -215,7 +223,7 @@
         "key": "Analyze",
         "location": {
           "startingColumn": 28,
-          "startingLine": 547
+          "startingLine": 518
         }
       },
       {
@@ -223,7 +231,7 @@
         "key": "Report",
         "location": {
           "startingColumn": 36,
-          "startingLine": 599
+          "startingLine": 570
         }
       },
       {
@@ -231,7 +239,7 @@
         "key": "Close",
         "location": {
           "startingColumn": 36,
-          "startingLine": 615
+          "startingLine": 586
         }
       }
     ]

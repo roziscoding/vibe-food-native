@@ -188,6 +188,7 @@ struct MealEditorView: View {
                                 Text(ingredient.name).tag(Optional(ingredient.id))
                             }
                         }
+                        .pickerStyle(.menu)
 
                         Picker("Amount In", selection: $line.amountInputMode) {
                             Text("Portions").tag(MealIngredientAmountInputMode.portions)
@@ -196,16 +197,27 @@ struct MealEditorView: View {
                         .pickerStyle(.segmented)
                         .disabled(line.ingredientId == nil)
 
-                        HStack {
+                        HStack(alignment: .center, spacing: 10) {
                             Text("Amount")
                             Spacer()
-                            TextField("", value: amountInputBinding(for: $line), format: .number)
-                                .multilineTextAlignment(.trailing)
-                                .keyboardType(.decimalPad)
-                                .frame(maxWidth: 140)
-                            Text(amountInputUnitLabel(for: line))
-                                .foregroundStyle(.secondary)
+                            HStack(spacing: 8) {
+                                TextField("0", value: amountInputBinding(for: $line), format: .number)
+                                    .multilineTextAlignment(.trailing)
+                                    .keyboardType(.decimalPad)
+                                    .frame(minWidth: 88, maxWidth: 112)
+                                    .contentShape(Rectangle())
+                                Text(amountInputUnitLabel(for: line))
+                                    .foregroundStyle(.secondary)
+                            }
+                            .padding(.horizontal, 10)
+                            .frame(minHeight: 42)
+                            .background(AppGlass.controlFill, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+                            .overlay {
+                                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                                    .stroke(AppGlass.secondaryBorder, lineWidth: 1)
+                            }
                         }
+                        .padding(.top, 8)
 
                         if let portionHint = portionHint(for: line) {
                             Text(portionHint)

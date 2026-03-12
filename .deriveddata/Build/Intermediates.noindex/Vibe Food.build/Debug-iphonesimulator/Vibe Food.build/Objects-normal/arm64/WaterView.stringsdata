@@ -7,7 +7,7 @@
         "key": "Error",
         "location": {
           "startingColumn": 20,
-          "startingLine": 112
+          "startingLine": 124
         }
       },
       {
@@ -15,7 +15,7 @@
         "key": "Delete Entry",
         "location": {
           "startingColumn": 20,
-          "startingLine": 133
+          "startingLine": 145
         }
       },
       {
@@ -23,7 +23,7 @@
         "key": "Log your first glass for this day.",
         "location": {
           "startingColumn": 51,
-          "startingLine": 57
+          "startingLine": 59
         }
       },
       {
@@ -31,7 +31,7 @@
         "key": "No water entries",
         "location": {
           "startingColumn": 33,
-          "startingLine": 55
+          "startingLine": 57
         }
       },
       {
@@ -39,7 +39,7 @@
         "key": "Delete",
         "location": {
           "startingColumn": 51,
-          "startingLine": 75
+          "startingLine": 77
         }
       },
       {
@@ -47,7 +47,7 @@
         "key": "Report",
         "location": {
           "startingColumn": 24,
-          "startingLine": 116
+          "startingLine": 128
         }
       },
       {
@@ -55,7 +55,7 @@
         "key": "OK",
         "location": {
           "startingColumn": 24,
-          "startingLine": 126
+          "startingLine": 138
         }
       },
       {
@@ -63,7 +63,7 @@
         "key": "Delete",
         "location": {
           "startingColumn": 24,
-          "startingLine": 137
+          "startingLine": 149
         }
       },
       {
@@ -71,7 +71,7 @@
         "key": "Cancel",
         "location": {
           "startingColumn": 24,
-          "startingLine": 140
+          "startingLine": 152
         }
       },
       {
@@ -79,7 +79,7 @@
         "key": "This water entry will be removed from your history.",
         "location": {
           "startingColumn": 22,
-          "startingLine": 144
+          "startingLine": 156
         }
       },
       {
@@ -87,7 +87,7 @@
         "key": "Today",
         "location": {
           "startingColumn": 18,
-          "startingLine": 176
+          "startingLine": 188
         }
       },
       {
@@ -95,7 +95,7 @@
         "key": "Custom ml",
         "location": {
           "startingColumn": 27,
-          "startingLine": 212
+          "startingLine": 224
         }
       },
       {
@@ -103,7 +103,7 @@
         "key": "Add",
         "location": {
           "startingColumn": 24,
-          "startingLine": 222
+          "startingLine": 234
         }
       },
       {
@@ -111,7 +111,15 @@
         "key": "+%lld ml",
         "location": {
           "startingColumn": 18,
-          "startingLine": 240
+          "startingLine": 252
+        }
+      },
+      {
+        "comment": "",
+        "key": "Done",
+        "location": {
+          "startingColumn": 20,
+          "startingLine": 278
         }
       },
       {
@@ -119,7 +127,7 @@
         "key": "%@ ml",
         "location": {
           "startingColumn": 22,
-          "startingLine": 266
+          "startingLine": 306
         }
       }
     ]

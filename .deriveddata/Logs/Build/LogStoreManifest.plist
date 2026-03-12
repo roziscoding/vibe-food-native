@@ -6,7 +6,7 @@
 	<integer>12</integer>
 	<key>logs</key>
 	<dict>
-		<key>57CFA7BC-9A68-4860-93D1-4F743A8BEE22</key>
+		<key>5B3EEEAB-0447-41BD-894E-5E5770FB78C6</key>
 		<dict>
 			<key>className</key>
 			<string>IDECommandLineBuildLog</string>
@@ -15,7 +15,7 @@
 			<key>domainType</key>
 			<string>Xcode.IDEActivityLogDomainType.BuildLog</string>
 			<key>fileName</key>
-			<string>57CFA7BC-9A68-4860-93D1-4F743A8BEE22.xcactivitylog</string>
+			<string>5B3EEEAB-0447-41BD-894E-5E5770FB78C6.xcactivitylog</string>
 			<key>hasPrimaryLog</key>
 			<true/>
 			<key>primaryObservable</key>
@@ -40,15 +40,15 @@
 			<key>signature</key>
 			<string>Building project Vibe Food with scheme Vibe Food and configuration Debug</string>
 			<key>timeStartedRecording</key>
-			<real>794841190.36098003</real>
+			<real>795016698.41947603</real>
 			<key>timeStoppedRecording</key>
-			<real>794841199.26814795</real>
+			<real>795016705.66682804</real>
 			<key>title</key>
 			<string>Building project Vibe Food with scheme Vibe Food and configuration Debug</string>
 			<key>uniqueIdentifier</key>
-			<string>57CFA7BC-9A68-4860-93D1-4F743A8BEE22</string>
+			<string>5B3EEEAB-0447-41BD-894E-5E5770FB78C6</string>
 		</dict>
-		<key>8CF4774E-F6A4-4E0A-850B-649067273CAA</key>
+		<key>77853FE8-EB6E-4439-AA37-1D15EE503B7B</key>
 		<dict>
 			<key>className</key>
 			<string>IDECommandLineBuildLog</string>
@@ -57,7 +57,7 @@
 			<key>domainType</key>
 			<string>Xcode.IDEActivityLogDomainType.BuildLog</string>
 			<key>fileName</key>
-			<string>8CF4774E-F6A4-4E0A-850B-649067273CAA.xcactivitylog</string>
+			<string>77853FE8-EB6E-4439-AA37-1D15EE503B7B.xcactivitylog</string>
 			<key>hasPrimaryLog</key>
 			<true/>
 			<key>primaryObservable</key>
@@ -82,13 +82,13 @@
 			<key>signature</key>
 			<string>Building project Vibe Food with scheme Vibe Food and configuration Debug</string>
 			<key>timeStartedRecording</key>
-			<real>794841252.27952504</real>
+			<real>795016933.19756997</real>
 			<key>timeStoppedRecording</key>
-			<real>794841260.98742902</real>
+			<real>795016937.84375799</real>
 			<key>title</key>
 			<string>Building project Vibe Food with scheme Vibe Food and configuration Debug</string>
 			<key>uniqueIdentifier</key>
-			<string>8CF4774E-F6A4-4E0A-850B-649067273CAA</string>
+			<string>77853FE8-EB6E-4439-AA37-1D15EE503B7B</string>
 		</dict>
 	</dict>
 </dict>

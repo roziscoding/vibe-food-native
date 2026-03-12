@@ -247,7 +247,7 @@
         "key": "Totals",
         "location": {
           "startingColumn": 21,
-          "startingLine": 222
+          "startingLine": 247
         }
       },
       {
@@ -255,7 +255,7 @@
         "key": "Add Ingredient",
         "location": {
           "startingColumn": 24,
-          "startingLine": 217
+          "startingLine": 242
         }
       },
       {
@@ -263,7 +263,7 @@
         "key": "Select an ingredient for this line.",
         "location": {
           "startingColumn": 34,
-          "startingLine": 204
+          "startingLine": 229
         }
       },
       {
@@ -276,6 +276,14 @@
       },
       {
         "comment": "",
+        "key": "Amount In",
+        "location": {
+          "startingColumn": 32,
+          "startingLine": 193
+        }
+      },
+      {
+        "comment": "",
         "key": "Select ingredient",
         "location": {
           "startingColumn": 34,
@@ -284,18 +292,26 @@
       },
       {
         "comment": "",
-        "key": "Amount",
+        "key": "Portions",
         "location": {
           "startingColumn": 34,
-          "startingLine": 193
+          "startingLine": 194
         }
       },
       {
         "comment": "",
-        "key": "",
+        "key": "Amount",
         "location": {
-          "startingColumn": 39,
-          "startingLine": 195
+          "startingColumn": 34,
+          "startingLine": 201
+        }
+      },
+      {
+        "comment": "",
+        "key": "0",
+        "location": {
+          "startingColumn": 43,
+          "startingLine": 204
         }
       },
       {
@@ -303,7 +319,7 @@
         "key": "",
         "location": {
           "startingColumn": 23,
-          "startingLine": 240
+          "startingLine": 265
         }
       }
     ]

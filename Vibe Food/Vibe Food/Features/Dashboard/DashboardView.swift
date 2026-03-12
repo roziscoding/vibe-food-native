@@ -28,6 +28,7 @@ struct DashboardView: View {
     }
 }
 
+@MainActor
 private struct DashboardContentView: View {
     private static let showsMealsSection = false
     private static let bottomContentPadding: CGFloat = 120
